@@ -5,8 +5,8 @@ ROOT=../../..
 SRC_LIST="common/lib/src/global.vhd \
 common/util/src/clkGenBhv.vhd \
 common/util/src/resetGenBhv.vhd \
-common/lib/src/tripleBufRtl.vhd \
-common/lib/tb/tbTripleBufBhv.vhd"
+common/pdi/src/tripleBufRtl.vhd \
+common/pdi/tb/tbTripleBufBhv.vhd"
 
 TOP_LEVEL=tbTripleBuf
 
