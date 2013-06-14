@@ -29,7 +29,7 @@ do
 
     #copy work to results
     mkdir results -p
-    cp `dirname $TBSH`/_out_* ./results -ru
+    mv `dirname $TBSH`/_out_* ./results -fu
 
     #check return
     if [ $RET -ne 0 ]; then
