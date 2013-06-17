@@ -14,13 +14,13 @@ TCL_LIST=`find $ORIGIN_DIR -name "test-*.tcl"`
 #loop through list
 for TCL in $TCL_LIST
 do
+    TCL_DIR=`dirname $TCL`
+    TCL_SRC=`basename $TCL`
+
     #change to directoy
-    pushd `dirname $TCL`
+    pushd $TCL_DIR
 
-    echo
-    echo "Call" `basename $TCL .tcl`
-
-    tclsh `basename $TCL .tcl`.tcl
+    tclsh $TCL_SRC
     RET=$?
 
     popd
