@@ -5,6 +5,7 @@
 ROOT=../../..
 DOFILE=$ROOT/common/util/do/sim.do
 TOP_LEVEL=$1
+VHDL_STD="-93"
 READ_MODE=
 SRC_LIST=
 GEN_LIST=
@@ -30,7 +31,7 @@ do
 done
 
 #compile source files
-vcom -work work $SRC_LIST
+vcom $VHDL_STD -work work $SRC_LIST
 if test $? -ne 0
 then
     exit 1
