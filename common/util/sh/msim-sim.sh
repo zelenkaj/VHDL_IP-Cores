@@ -50,8 +50,5 @@ cp work $OUT_DIR/work -r
 cp transcript $OUT_DIR -r
 cp *.wlf $OUT_DIR -r
 
-#translate wlf into vcd
-wlf2vcd -o $OUT_DIR/wave.vcd $OUT_DIR/*.wlf
-
 #exit with simulation return
 exit $RET
