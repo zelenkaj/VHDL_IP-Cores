@@ -39,6 +39,9 @@ fi
 #simulate design
 vsim $TOP_LEVEL -c -do $DOFILE -lib work $GEN_LIST
 
+#catch simulation return
+RET=$?
+
 #create output dir
 mkdir $OUT_DIR -p
 #copy work into
@@ -50,4 +53,5 @@ cp *.wlf $OUT_DIR -r
 #translate wlf into vcd
 wlf2vcd -o $OUT_DIR/wave.vcd $OUT_DIR/*.wlf
 
-exit $?
+#exit with simulation return
+exit $RET
