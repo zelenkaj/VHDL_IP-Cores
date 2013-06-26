@@ -7,6 +7,7 @@ DOFILE=$ROOT/common/util/do/sim.do
 TOP_LEVEL=$1
 VHDL_STD="-93"
 READ_MODE=
+NO_RUN=
 SRC_LIST=
 GEN_LIST=
 OUT_DIR=_out_$TOP_LEVEL
@@ -23,6 +24,9 @@ do
         READ_MODE="SRC"
     elif [ "$i" == "-g" ]; then
         READ_MODE="GEN"
+    elif [ "$i" == "--no-run" ]; then
+        READ_MODE=
+        NO_RUN=1
     elif [ "$READ_MODE" == "SRC" ]; then
         SRC_LIST+="$ROOT/$i "
     elif [ "$READ_MODE" == "GEN" ]; then
@@ -35,6 +39,11 @@ vcom $VHDL_STD -work work $SRC_LIST
 if test $? -ne 0
 then
     exit 1
+fi
+
+#exit if --no-run
+if [ -n "$NO_RUN" ]; then
+    exit 0
 fi
 
 #simulate design
