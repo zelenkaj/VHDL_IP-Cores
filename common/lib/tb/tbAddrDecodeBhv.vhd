@@ -65,8 +65,6 @@ architecture bhv of tbAddrDecode is
     signal addr : std_logic_vector(cAddrWidth-1 downto 0) := (others => cInactivated);
     signal addr_next : std_logic_vector(addr'range) := (others => cInactivated);
     signal sel : std_logic;
-    signal selBase : std_logic;
-    signal selHigh : std_logic;
 begin
     DUT : entity work.addrDecode
         generic map (
@@ -77,9 +75,7 @@ begin
         port map (
             iEnable => en,
             iAddress => addr,
-            oSelect => sel,
-            oSelectBase => selBase,
-            oSelectHigh => selHigh
+            oSelect => sel
         );
 
     assert (not(done = cActivated and errCnt = 0))
@@ -127,18 +123,14 @@ begin
             errCnt_trig <= cInactivated;
             if en = cActivated then
                 if (cBase <= vAddr) and (vAddr <= cHigh) then
-                    if (sel /= cActivated) or
-                       (selBase /= cActivated and vAddr = cBase) or
-                       (selHigh /= cActivated and vAddr = cHigh) then
+                    if sel /= cActivated then
                         errCnt_trig <= cActivated;
                         assert (FALSE) report "Addr = " & integer'IMAGE(vAddr)
                             & " not decoded!"
                             severity warning;
                     end if;
                 else
-                    if (sel /= cInactivated) or
-                       (selBase /= cInactivated) or
-                       (selHigh /= cInactivated) then
+                    if sel /= cInactivated then
                         errCnt_trig <= cActivated;
                         assert (FALSE) report "Addr = " & integer'IMAGE(vAddr)
                             & " decoded wrongly!"
@@ -146,9 +138,7 @@ begin
                     end if;
                 end if;
             else
-                if (sel /= cInactivated) or
-                   (selBase /= cInactivated) or
-                   (selHigh /= cInactivated) then
+                if sel /= cInactivated then
                     errCnt_trig <= cActivated;
                     assert (FALSE) report "Deactivated decoder does decoding!"
                         severity warning;

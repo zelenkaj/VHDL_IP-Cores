@@ -61,11 +61,7 @@ entity addrDecode is
         --! Address bus
         iAddress : in std_logic_vector(gAddrWidth-1 downto 0);
         --! Select output
-        oSelect : out std_logic;
-        --! Base select output
-        oSelectBase : out std_logic;
-        --! High select output
-        oSelectHigh : out std_logic
+        oSelect : out std_logic
     );
 end addrDecode;
 
@@ -74,10 +70,6 @@ architecture rtl of addrDecode is
     signal address : unsigned(gAddrWidth-1 downto 0);
     --! Address is in range
     signal addressInRange : std_logic;
-    --! Base address is selected
-    signal baseSel : std_logic;
-    --! High address is selected
-    signal highSel : std_logic;
 
     --! Base address used for comparison
     constant cBase : unsigned(gAddrWidth-1 downto 0) :=
@@ -92,8 +84,6 @@ begin
 
     -- connect ports to signals
     oSelect <= addressInRange;
-    oSelectBase <= baseSel;
-    oSelectHigh <= highSel;
     address <= unsigned(iAddress);
 
     --! Decode input address logic
@@ -104,17 +94,10 @@ begin
     begin
         --default assignments of process outputs
         addressInRange <= cInactivated;
-        baseSel <= cInactivated;
-        highSel <= cInactivated;
 
         if iEnable = cActivated then
             if (cBase <= address) and (address <= cHigh) then
                 addressInRange <= cActivated;
-            end if;
-            if address = cBase then
-                baseSel <= cActivated;
-            elsif address = cHigh then
-                highSel <= cActivated;
             end if;
         end if;
     end process;
