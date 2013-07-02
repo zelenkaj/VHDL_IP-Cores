@@ -49,6 +49,7 @@ use STD.textio.all;
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 use ieee.std_logic_textio.all;
 
 --***********************************************************************--
@@ -70,6 +71,9 @@ use ieee.std_logic_textio.all;
 --  WORD    | w
 --  DWORD   | d
 --
+-- (hint: value = absolute value; do not consider the position of bytes, this is done
+--              automatically with the address and memAccess information. Just the
+--              value is needed. The same is considert when it comes to a comparison.)
 -- (hint: rel.offset = realtive offset from current instruction (positive natural!)
 -- (hint: to add further instruction modify: tBusMasterStates,cInstruction2StateMap
 --     and sStateIntstruction-FSM in busMasterBhv.vhd)
@@ -161,6 +165,7 @@ package busMasterPkg is
     function instruction2Value(instr : string; dataType : tMemoryAccess; nrValue : natural) return std_logic_vector;
     function MemAccess2nrBytes(memAccess : tMemoryAccess) return natural;
     function nrBytes2MemAccess( nrBytes : natural) return tMemoryAccess;
+    function value2MaskedValue(val : std_logic_vector; byteEnable : std_logic_vector; nrBytes : natural) return std_logic_vector;
     function compareReadValue(dest :std_logic_vector; src : std_logic_vector; byteEnable : std_logic_vector) return boolean;
 
 end package busMasterPkg;
@@ -392,23 +397,47 @@ package body busMasterPkg is
 
      end nrBytes2MemAccess;
 
+     ---------------------------------------------------------------------------
+     function value2MaskedValue(val : std_logic_vector; byteEnable : std_logic_vector; nrBytes : natural) return std_logic_vector is
+        variable result, mask : std_logic_vector(cMaxBitWidth-1 downto 0) := (others => '0');
+        variable position : natural;
+     begin
+
+        for j in 0 to (cMaxBitWidth/8)-1 loop
+            if byteEnable(j) = '1' then
+                position := j;
+                exit;
+            end if;
+        end loop;
+
+        mask := (others => '0');
+        for i in byteEnable'range loop
+            if byteEnable(i) = '1' then
+                mask(((i+1)*8)-1 downto i*8) := (others => '1');
+            end if;
+        end loop;
+
+        result := std_logic_vector(SHIFT_LEFT(unsigned(val), position*8)) and mask;
+        return result;
+
+     end value2MaskedValue;
+
     ---------------------------------------------------------------------------
     function compareReadValue(dest : std_logic_vector; src : std_logic_vector; byteEnable : std_logic_vector) return boolean is
         variable result : boolean := FALSE;
         variable nrBytes : natural := 0;
     begin
             result := TRUE;
-            for j in byteEnable'range loop
-                if byteEnable(j) = '1' then
-                    nrBytes := nrBytes + 1;
+            for i in byteEnable'range loop
+                if byteEnable(i) = '1' then     -- just compare at the position of byteEnable!
+                    if ( dest((i+1)*8-1 downto i*8) /= src((i+1)*8-1 downto i*8) ) then
+                        result := FALSE;
+                    end if;
                 end if;
             end loop;
-            for i in 0 to nrBytes-1 loop
-                if ( dest((i+1)*8-1 downto i*8) /= src((i+1)*8-1 downto i*8) ) then
-                    result := FALSE;
-                end if;
-            end loop;
+
         return result;
+
     end compareReadValue;
 
 end package body busMasterPkg;

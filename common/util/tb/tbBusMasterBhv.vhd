@@ -91,41 +91,9 @@ begin
         oReadData <= (others => 'X');
         if iSelect = cActivated and iWrite /= iRead and  cMemoryRange >= to_integer(unsigned(iAddress))then
             if iWrite = cActivated then
-                Memory(to_integer(unsigned(iAddress))) <= (others => 'X');
-                case iByteenable is
-                    when "1111" =>
-                        Memory(to_integer(unsigned(iAddress))) <= iWriteData after cPeriode/4;
-                    when "0011" =>
-                        Memory(to_integer(unsigned(iAddress)))(15 downto 0) <= iWriteData(15 downto 0) after cPeriode/4;
-                    when "1100" =>
-                        Memory(to_integer(unsigned(iAddress)))(31 downto 16) <= iWriteData(15 downto 0) after cPeriode/4;
-                    when "0001" | "0010" | "0100" | "1000" =>
-                        for i in iByteenable'range loop
-                            if iByteenable(i) = cActivated then
-                                Memory(to_integer(unsigned(iAddress)))((i+1)*8-1 downto i*8) <= iWriteData(7 downto 0) after cPeriode/4;
-                            end if;
-                        end loop;
-                    when others =>
-                        -- default assignment
-                end case;
-
+                Memory(to_integer(unsigned(iAddress))) <= iWriteData after cPeriode/4;
             elsif iRead = cActivated then
-                 case iByteenable is
-                    when "1111" =>
-                        oReadData <= Memory(to_integer(unsigned(iAddress)));
-                    when "0011" =>
-                        oReadData(15 downto 0) <= Memory(to_integer(unsigned(iAddress)))(15 downto 0);
-                    when "1100" =>
-                        oReadData(15 downto 0)  <= Memory(to_integer(unsigned(iAddress)))(31 downto 16);
-                    when "0001" | "0010" | "0100" | "1000" =>
-                        for i in iByteenable'range loop
-                            if iByteenable(i) = cActivated then
-                                oReadData(7 downto 0) <= Memory(to_integer(unsigned(iAddress)))((i+1)*8-1 downto i*8);
-                            end if;
-                        end loop;
-                    when others =>
-                        -- default assignment
-                end case;
+                oReadData <= Memory(to_integer(unsigned(iAddress)));
             end if;
         end if;
     end process TheMemory;

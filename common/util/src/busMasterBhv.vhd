@@ -79,7 +79,7 @@ entity busMaster is
         oDone       : out std_logic
     );
     begin
-        assert gDataWidth = 32 report "other bit widths are not yet supported" &
+        assert gDataWidth = cMaxBitWidth report "other bit widths are not yet supported" &
             "by the package! Use a bus converter after the busMaster" &
             "to access slaves with smaller data widths!" severity error;
 
@@ -137,7 +137,6 @@ architecture bhv of busMaster is
         errorEnable             => cInactivated,
         command                 => s_UNDEF,
         memAccess               => s_UNDEF
-        --busProtocol             => cInitBusProtocol
     );
     --***********************************************************************--
     -- SIGNALS:
@@ -158,6 +157,7 @@ begin
     FSM: process(InterpreterState, Reg, iEnable, iAck, iReaddata, fsmTrigger )
         variable vLine      : line;
         variable vAddress   : std_logic_vector(gAddrWidth-1 downto 0);
+        variable vValue     : std_logic_vector(gDataWidth-1 downto 0);
         variable vMemAccess : tMemoryAccess;
         variable vNrBytes   : natural;
     begin
@@ -168,11 +168,11 @@ begin
         case InterpreterState is
             when s_READOUT =>
 
-                if endfile(stimulifile) then        -- EOF
+                if endfile(stimulifile) then                    -- EOF
                     InterpreterState <= s_FINISHED;
-                elsif iEnable = cActivated then     -- !EOF and iEnable
+                elsif iEnable = cActivated then                 -- !EOF and iEnable
                     InterpreterState <= s_INIT_REG;
-                    if vJump = TRUE then                   -- skip intructions
+                    if vJump = TRUE then                        -- skip intructions
                         for i in 0 to Reg.relativeJump-1 loop
                             readline(stimulifile, vLine);
                             if endfile(stimulifile) then
@@ -181,7 +181,7 @@ begin
                             end if;
                         end loop;
                     else
-                        readline(stimulifile, vLine);                   -- read instruction
+                        readline(stimulifile, vLine);            -- read instruction
                     end if;
                 end if;
 
@@ -190,10 +190,10 @@ begin
 
                 vReadString := (others => ' ');
                 read(vLine, vReadString(vLine'range));
-                -- interpret vCmd:
+                -- interpret instruction:
                 vCmd                := instruction2Command(vReadString);
                 vJump               := FALSE;
-                -- reset output register
+                -- reset register
                 NextReg.address     <= (others => 'X');
                 NextReg.writeData   <= (others => 'X');
                 NextReg.byteEnable  <= (others => 'X');
@@ -208,7 +208,7 @@ begin
                 NextReg.relativeJump<= 0;
 
             when s_INSTR_FETCH  =>
-                InterpreterState    <= s_READOUT;  -- read a new line!
+                InterpreterState    <= s_READOUT;               -- read a new line!
                 if vCmd /= s_UNDEF then
                     NextReg.command     <= vCmd;
                     vMemAccess          := instruction2MemAccess(vReadString);
@@ -217,33 +217,35 @@ begin
 
                 case vCmd is
                     when s_WRITE =>
-                        vAddress            := instruction2Value(vReadString, nrBytes2MemAccess(gDataWidth/8), 1)(gAddrWidth-1 downto 0);
-                        NextReg.byteEnable  <= MemAccess2ByteEnable(vMemAccess, vAddress );
+                        vAddress            := instruction2Value( vReadString, nrBytes2MemAccess( gDataWidth/8 ), 1 )(gAddrWidth-1 downto 0);
+                        NextReg.byteEnable  <= MemAccess2ByteEnable( vMemAccess, vAddress );
                         NextReg.address     <= vAddress;
-                        NextReg.writeData   <= instruction2Value(vReadString, vMemAccess, 2);
+                        vValue              := instruction2Value( vReadString, vMemAccess, 2 );
+                        NextReg.writeData   <= value2MaskedValue( vValue, MemAccess2ByteEnable( vMemAccess, vAddress ), MemAccess2nrBytes( vMemAccess ) )(gDataWidth-1 downto 0);
                         NextReg.writeEnable <= cActivated;
                         NextReg.selectEnable<= cActivated;
                         InterpreterState    <= s_REGISTER;
 
                     when s_READ =>
-                        vAddress            := instruction2Value(vReadString, nrBytes2MemAccess(gDataWidth/8), 1)(gAddrWidth-1 downto 0);
-                        NextReg.byteEnable  <= MemAccess2ByteEnable(vMemAccess, vAddress );
+                        vAddress            := instruction2Value( vReadString, nrBytes2MemAccess( gDataWidth/8 ), 1 )(gAddrWidth-1 downto 0);
+                        NextReg.byteEnable  <= MemAccess2ByteEnable( vMemAccess, vAddress );
                         NextReg.address     <= vAddress;
                         NextReg.readEnable  <= cActivated;
                         NextReg.selectEnable<= cActivated;
                         InterpreterState    <= s_REGISTER;
 
                     when s_JMPEQ | s_JMPNEQ | s_ASSERT | s_WAIT =>
-                        vAddress            := instruction2Value(vReadString, nrBytes2MemAccess(gDataWidth/8), 1)(gAddrWidth-1 downto 0);
-                        NextReg.byteEnable  <= MemAccess2ByteEnable(vMemAccess, vAddress );
+                        vAddress            := instruction2Value( vReadString, nrBytes2MemAccess( gDataWidth/8 ), 1 )(gAddrWidth-1 downto 0);
+                        NextReg.byteEnable  <= MemAccess2ByteEnable( vMemAccess, vAddress );
                         NextReg.address     <= vAddress;
                         NextReg.readEnable  <= cActivated;
                         NextReg.selectEnable<= cActivated;
-                        NextReg.compareValue<= instruction2Value(vReadString, vMemAccess, 2)(gDataWidth-1 downto 0);
+                        vValue              := instruction2Value( vReadString, vMemAccess, 2 )(gDataWidth-1 downto 0);
+                        NextReg.compareValue<= value2MaskedValue( vValue, MemAccess2ByteEnable( vMemAccess, vAddress ), MemAccess2nrBytes( vMemAccess ) )(gDataWidth-1 downto 0);
                         InterpreterState    <= s_REGISTER;
 
                         if vCmd = s_JMPEQ or vCmd = s_JMPNEQ then
-                            NextReg.relativeJump <= to_integer(unsigned(instruction2Value(vReadString, nrBytes2MemAccess(gDataWidth/8), 3)));
+                            NextReg.relativeJump <= to_integer(unsigned(instruction2Value( vReadString, nrBytes2MemAccess( gDataWidth/8 ), 3 )));
                         end if;
 
                     when s_ERROR =>
@@ -255,7 +257,7 @@ begin
                         NextReg.doneEnable  <= cActivated;
 
                     when s_NOP =>
-                        InterpreterState    <= s_REGISTER;  -- wait explicit a cycle!
+                        InterpreterState    <= s_REGISTER;      -- wait explicit a cycle!
 
                     when s_UNDEF  =>
 
@@ -266,14 +268,15 @@ begin
                 -- now the values of the NextReg should be stable
 
             when s_REGISTER =>
-                    if fsmTrigger'event then
-                        -- now stable values are registered
+                    if fsmTrigger'event then                    -- now stable values are registered
                         InterpreterState <= s_WAIT;
                     end if;
 
             when s_WAIT =>
                     if iAck = cActivated then
-                        InterpreterState <= s_COMPARE; -- time to set Reg to correct value!!
+                        -- propagation delay to ensure, that the input is correct.
+                        -- otherwise it would take some delta cycles.
+                        InterpreterState <= s_COMPARE after 100 ps;
                     elsif Reg.command = s_NOP then
                         InterpreterState <= s_READOUT;
                     end if;
@@ -284,33 +287,35 @@ begin
 
                 case Reg.command is
                     when s_JMPEQ  =>
-                        vJump := compareReadValue(iReaddata, Reg.compareValue, Reg.byteEnable);
+                        vJump := compareReadValue( iReaddata, Reg.compareValue, Reg.byteEnable );
+
                     when s_JMPNEQ =>
-                        if compareReadValue(iReaddata, Reg.compareValue, Reg.byteEnable) = FALSE  then
+                        if compareReadValue( iReaddata, Reg.compareValue, Reg.byteEnable ) = FALSE  then
                             vJump := TRUE;
                         end if;
+
                     when s_ASSERT =>
-                        if compareReadValue(iReaddata, Reg.compareValue, Reg.byteEnable) = FALSE then
+                        if compareReadValue( iReaddata, Reg.compareValue, Reg.byteEnable ) = FALSE then
                             InterpreterState <= s_ERROR;
                         end if;
 
                     when s_WAIT =>
-                        if compareReadValue(iReaddata, Reg.compareValue, Reg.byteEnable) = FALSE then
+                        if compareReadValue( iReaddata, Reg.compareValue, Reg.byteEnable ) = FALSE then
                             NextReg <= Reg;
-                            InterpreterState <= s_REGISTER; -- wait until condition is fulfilled
+                            InterpreterState <= s_REGISTER;     -- wait until condition is fulfilled
                         end if;
 
                     when others   =>
                 end case;
 
-                if vJump = TRUE and Reg.relativeJump = 0 then
-                    -- steady state:
+                if vJump = TRUE and Reg.relativeJump = 0 then   -- steady state:
                     InterpreterState <= s_FINISHED;
                 end if;
 
             when s_ERROR        =>
                 NextReg.errorEnable <= cActivated;
                 InterpreterState    <= s_FINISHED;
+
             when s_FINISHED     =>
                 NextReg.doneEnable <= cActivated;
 
