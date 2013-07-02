@@ -63,6 +63,7 @@ use ieee.std_logic_textio.all;
 --  s_ERROR     | ERR   |   cmd-(don'care)
 --  s_FINISHED  | FIN   |   cmd-(don'care)
 --  s_NOP       | NOP   |   cmd-(don'care)
+--  s_WAIT      | WAIT  |   cmd-access-address-value
 -- Memory access:
 --  *key*   | *word*
 --  BYTE    | b
@@ -94,6 +95,7 @@ package busMasterPkg is
         s_ERROR,     -- sets the error flag.
         s_FINISHED,  -- sets the done flag.
         s_NOP,       -- no operation will be executed.
+        s_WAIT,      -- waits as long as the condition(value) is not fulfilled.
         s_UNDEF
      );
      ---------------------------------------------------------------------------
@@ -114,7 +116,8 @@ package busMasterPkg is
                 4=> ( Key => "ASS ", Value => s_ASSERT ),
                 5=> ( Key => "ERR ", Value => s_ERROR ),
                 6=> ( Key => "FIN ", Value => s_FINISHED ),
-                7=> ( Key => "NOP ", Value => s_NOP )
+                7=> ( Key => "NOP ", Value => s_NOP ),
+                8=> ( Key => "WAIT", Value => s_WAIT )
      );
     ---------------------------------------------------------------------------
      type tAccessKeyValue is record

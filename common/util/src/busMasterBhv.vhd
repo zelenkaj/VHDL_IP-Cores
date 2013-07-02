@@ -217,7 +217,7 @@ begin
 
                 case vCmd is
                     when s_WRITE =>
-                        vAddress            := instruction2Value(vReadString, nrBytes2MemAccess(gDataWidth/8), 1);
+                        vAddress            := instruction2Value(vReadString, nrBytes2MemAccess(gDataWidth/8), 1)(gAddrWidth-1 downto 0);
                         NextReg.byteEnable  <= MemAccess2ByteEnable(vMemAccess, vAddress );
                         NextReg.address     <= vAddress;
                         NextReg.writeData   <= instruction2Value(vReadString, vMemAccess, 2);
@@ -226,23 +226,23 @@ begin
                         InterpreterState    <= s_REGISTER;
 
                     when s_READ =>
-                        vAddress            := instruction2Value(vReadString, nrBytes2MemAccess(gDataWidth/8), 1);
+                        vAddress            := instruction2Value(vReadString, nrBytes2MemAccess(gDataWidth/8), 1)(gAddrWidth-1 downto 0);
                         NextReg.byteEnable  <= MemAccess2ByteEnable(vMemAccess, vAddress );
                         NextReg.address     <= vAddress;
                         NextReg.readEnable  <= cActivated;
                         NextReg.selectEnable<= cActivated;
                         InterpreterState    <= s_REGISTER;
 
-                    when s_JMPEQ | s_JMPNEQ | s_ASSERT =>
-                        vAddress            := instruction2Value(vReadString, nrBytes2MemAccess(gDataWidth/8), 1);
+                    when s_JMPEQ | s_JMPNEQ | s_ASSERT | s_WAIT =>
+                        vAddress            := instruction2Value(vReadString, nrBytes2MemAccess(gDataWidth/8), 1)(gAddrWidth-1 downto 0);
                         NextReg.byteEnable  <= MemAccess2ByteEnable(vMemAccess, vAddress );
                         NextReg.address     <= vAddress;
                         NextReg.readEnable  <= cActivated;
                         NextReg.selectEnable<= cActivated;
-                        NextReg.compareValue<= instruction2Value(vReadString, vMemAccess, 2);
+                        NextReg.compareValue<= instruction2Value(vReadString, vMemAccess, 2)(gDataWidth-1 downto 0);
                         InterpreterState    <= s_REGISTER;
 
-                        if vCmd /= s_ASSERT then
+                        if vCmd = s_JMPEQ or vCmd = s_JMPNEQ then
                             NextReg.relativeJump <= to_integer(unsigned(instruction2Value(vReadString, nrBytes2MemAccess(gDataWidth/8), 3)));
                         end if;
 
@@ -293,6 +293,13 @@ begin
                         if compareReadValue(iReaddata, Reg.compareValue, Reg.byteEnable) = FALSE then
                             InterpreterState <= s_ERROR;
                         end if;
+
+                    when s_WAIT =>
+                        if compareReadValue(iReaddata, Reg.compareValue, Reg.byteEnable) = FALSE then
+                            NextReg <= Reg;
+                            InterpreterState <= s_REGISTER; -- wait until condition is fulfilled
+                        end if;
+
                     when others   =>
                 end case;
 
@@ -332,9 +339,9 @@ begin
     oWrite      <= Reg.writeEnable;
     oRead       <= Reg.readEnable;
     oSelect     <= Reg.selectEnable;
-    oAddress    <= Reg.address;
+    oAddress    <= Reg.address(gAddrWidth-1 downto 0);
     oByteenable <= Reg.byteEnable;
-    oWritedata  <= Reg.writeData;
+    oWritedata  <= Reg.writeData(gDataWidth-1 downto 0);
     oError      <= Reg.errorEnable;
     oDone       <= Reg.doneEnable;
 
