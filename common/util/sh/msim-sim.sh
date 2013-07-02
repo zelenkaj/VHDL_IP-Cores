@@ -7,6 +7,7 @@ DOFILE=$ROOT/common/util/do/sim.do
 TOP_LEVEL=$1
 VHDL_STD="-93"
 READ_MODE=
+OPTIMIZATION=
 NO_RUN=
 SRC_LIST=
 GEN_LIST=
@@ -35,6 +36,9 @@ do
     elif [ "$i" == "-2008" ]; then
         VHDL_STD="$i"
         READ_MODE=
+    elif [ "$i" == "-novopt" ]; then
+        OPTIMIZATION="$i"
+        READ_MODE=
     elif [ "$i" == "-s" ]; then
         READ_MODE="SRC"
     elif [ "$i" == "-g" ]; then
@@ -59,7 +63,7 @@ if [ -n "$NO_RUN" ]; then
 fi
 
 #simulate design
-vsim $TOP_LEVEL -c -do $DOFILE -lib work $GEN_LIST
+vsim $OPTIMIZATION $TOP_LEVEL -c -do $DOFILE -lib work $GEN_LIST
 
 #catch simulation return
 RET=$?

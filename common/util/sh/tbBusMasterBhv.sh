@@ -4,7 +4,8 @@ ROOT=../../..
 
 PAR=$*
 VHDL_STD="-2008"
-PAR+=" "$VHDL_STD
+OPTIMIZATION="-novopt"
+PAR+=" "$OPTIMIZATION" "$VHDL_STD
 SRC_LIST="common/lib/src/global.vhd \
 common/util/src/busMasterPkg.vhd \
 common/util/src/busMasterBhv.vhd \
