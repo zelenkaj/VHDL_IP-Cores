@@ -20,13 +20,25 @@ vlib work
 
 for i in $*
 do
-    if [ "$i" == "-s" ]; then
+    if [ "$i" == "--no-run" ]; then
+        READ_MODE=
+        NO_RUN=1
+    elif [ "$i" == "-87" ]; then
+        VHDL_STD="$i"
+        READ_MODE=
+    elif [ "$i" == "-93" ]; then
+        VHDL_STD="$i"
+        READ_MODE=
+    elif [ "$i" == "-2002" ]; then
+        VHDL_STD="$i"
+        READ_MODE=
+    elif [ "$i" == "-2008" ]; then
+        VHDL_STD="$i"
+        READ_MODE=
+    elif [ "$i" == "-s" ]; then
         READ_MODE="SRC"
     elif [ "$i" == "-g" ]; then
         READ_MODE="GEN"
-    elif [ "$i" == "--no-run" ]; then
-        READ_MODE=
-        NO_RUN=1
     elif [ "$READ_MODE" == "SRC" ]; then
         SRC_LIST+="$ROOT/$i "
     elif [ "$READ_MODE" == "GEN" ]; then
