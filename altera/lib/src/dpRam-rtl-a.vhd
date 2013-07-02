@@ -47,7 +47,7 @@ use ieee.numeric_std.all;
 
 --! use altera_mf library
 library altera_mf;
-use altera_mf.all;
+use altera_mf.altera_mf_components.all;
 
 architecture rtl of dpRam is
 begin
