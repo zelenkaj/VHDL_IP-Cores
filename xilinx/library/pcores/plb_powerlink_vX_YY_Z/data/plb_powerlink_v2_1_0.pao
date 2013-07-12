@@ -70,8 +70,12 @@ lib plb_powerlink_v0_30_a ../../../../../../common/openmac/src/openMAC_phyAct vh
 lib plb_powerlink_v0_30_a ../../../../../../common/openmac/src/openMAC_PHYMI vhdl
 lib plb_powerlink_v0_30_a ../../../../../../common/openmac/src/openMAC_rmii2mii vhdl
 lib plb_powerlink_v0_30_a ../../../../../../common/openmac/src/openMAC vhdl
-lib plb_powerlink_v0_30_a ../../../../../../common/spi/src/spi_sreg vhdl
-lib plb_powerlink_v0_30_a ../../../../../../common/spi/src/spi vhdl
+lib plb_powerlink_v0_30_a ../../../../../../common/lib/src/cntRtl vhdl
+lib plb_powerlink_v0_30_a ../../../../../../common/lib/src/synchronizerRtl vhdl
+lib plb_powerlink_v0_30_a ../../../../../../common/lib/src/edgedetectorRtl vhdl
+lib plb_powerlink_v0_30_a ../../../../../../common/lib/src/nShiftRegRtl vhdl
+lib plb_powerlink_v0_30_a ../../../../../../common/spi/src/spiSlave-e vhdl
+lib plb_powerlink_v0_30_a ../../../../../../common/spi/src/spiSlave-rtl_sclk-a vhdl
 lib plb_powerlink_v0_30_a ../../../../../../common/pdi/src/pdi_apIrqGen vhdl
 lib plb_powerlink_v0_30_a ../../../../../../common/pdi/src/pdi_controlStatusReg vhdl
 lib plb_powerlink_v0_30_a ../../../../../../common/pdi/src/pdi_event vhdl

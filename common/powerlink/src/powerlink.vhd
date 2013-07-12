@@ -307,16 +307,6 @@ architecture rtl of powerlink is
     signal ap_irq_s                    :        std_logic;
     signal ap_asyncIrq_s            :        std_logic;
 
-    signal spi_sel_s                :        std_logic;
-    signal spi_sel_s1                :        std_logic;
-    signal spi_sel_s2                :        std_logic;
-    signal spi_clk_s                :        std_logic;
-    signal spi_clk_s1                :        std_logic;
-    signal spi_clk_s2                :        std_logic;
-    signal spi_mosi_s                :        std_logic;
-    signal spi_mosi_s1                :        std_logic;
-    signal spi_mosi_s2                :        std_logic;
-
     signal phyLink, phyAct            :        std_logic_vector(1 downto 0);
 
     signal led_s                    :        std_logic_vector(15 downto 0);
@@ -553,30 +543,6 @@ begin
         ap_asyncIrq <= ap_asyncIrq_s;
         ap_asyncIrq_n <= not ap_asyncIrq_s;
 
-        spi_clk_s <= spi_clk;
-        spi_sel_s <= not spi_sel_n;
-        spi_mosi_s <= spi_mosi;
-
-        theSyncProc : process(clk50, rst)
-        begin
-            if rst = '1' then
-                spi_sel_s1 <= '0';
-                spi_sel_s2 <= '0';
-                spi_clk_s1 <= '0';
-                spi_clk_s2 <= '0';
-                spi_mosi_s1 <= '0';
-                spi_mosi_s2 <= '0';
-            elsif clk50 = '1' and clk50'event then
-                spi_sel_s1 <= spi_sel_s;
-                spi_sel_s2 <= spi_sel_s1;
-
-                spi_clk_s1 <= spi_clk_s;
-                spi_clk_s2 <= spi_clk_s1;
-
-                spi_mosi_s1 <= spi_mosi_s;
-                spi_mosi_s2 <= spi_mosi_s1;
-            end if;
-        end process;
 ------------------------------------------------------------------------------------------------------------------------
 
         thePdiSpi : entity work.pdi_spi
@@ -588,10 +554,10 @@ begin
             )
             port map (
                 -- SPI
-                spi_clk                        => spi_clk_s2,
-                spi_sel                        => spi_sel_s2,
+                spi_clk                        => spi_clk,
+                spi_sel_n                      => spi_sel_n,
                 spi_miso                    => spi_miso,
-                spi_mosi                    => spi_mosi_s2,
+                spi_mosi                    => spi_mosi,
                 -- clock for AP side
                 ap_reset                    => rstPcp,
                 ap_clk                        => clk50,

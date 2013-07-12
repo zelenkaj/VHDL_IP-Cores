@@ -39,8 +39,8 @@
 #-- 2012-01-16	V0.02	zelenkaj	replace plb_* with ipif_master_handler
 #------------------------------------------------------------------------------------------------------------------------
 
-lib proc_common_v3_00_a  all 
-lib axi_lite_ipif_v1_01_a  all 
+lib proc_common_v3_00_a  all
+lib axi_lite_ipif_v1_01_a  all
 lib axi_master_burst_v1_00_a  all
 
 lib axi_powerlink_v0_30_a ../../../../../../common/lib/src/global vhdl
@@ -71,8 +71,12 @@ lib axi_powerlink_v0_30_a ../../../../../../common/openmac/src/openMAC_phyAct vh
 lib axi_powerlink_v0_30_a ../../../../../../common/openmac/src/openMAC_PHYMI vhdl
 lib axi_powerlink_v0_30_a ../../../../../../common/openmac/src/openMAC_rmii2mii vhdl
 lib axi_powerlink_v0_30_a ../../../../../../common/openmac/src/openMAC vhdl
-lib axi_powerlink_v0_30_a ../../../../../../common/spi/src/spi_sreg vhdl
-lib axi_powerlink_v0_30_a ../../../../../../common/spi/src/spi vhdl
+lib axi_powerlink_v0_30_a ../../../../../../common/lib/src/cntRtl vhdl
+lib axi_powerlink_v0_30_a ../../../../../../common/lib/src/synchronizerRtl vhdl
+lib axi_powerlink_v0_30_a ../../../../../../common/lib/src/edgedetectorRtl vhdl
+lib axi_powerlink_v0_30_a ../../../../../../common/lib/src/nShiftRegRtl vhdl
+lib axi_powerlink_v0_30_a ../../../../../../common/spi/src/spiSlave-e vhdl
+lib axi_powerlink_v0_30_a ../../../../../../common/spi/src/spiSlave-rtl_sclk-a vhdl
 lib axi_powerlink_v0_30_a ../../../../../../common/pdi/src/pdi_apIrqGen vhdl
 lib axi_powerlink_v0_30_a ../../../../../../common/pdi/src/pdi_controlStatusReg vhdl
 lib axi_powerlink_v0_30_a ../../../../../../common/pdi/src/pdi_event vhdl

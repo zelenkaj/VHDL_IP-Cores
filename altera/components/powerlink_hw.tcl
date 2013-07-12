@@ -82,8 +82,12 @@ add_file "../../common/pdi/src/pdi_simpleReg.vhd" {SYNTHESIS SIMULATION}
 add_file "../../common/pdi/src/portio.vhd" {SYNTHESIS SIMULATION}
 add_file "../../common/pdi/src/portio_cnt.vhd" {SYNTHESIS SIMULATION}
 add_file "../../common/pdi/src/pdi_spi.vhd" {SYNTHESIS SIMULATION}
-add_file "../../common/spi/src/spi.vhd" {SYNTHESIS SIMULATION}
-add_file "../../common/spi/src/spi_sreg.vhd" {SYNTHESIS SIMULATION}
+add_file "../../common/lib/src/cntRtl.vhd" {SYNTHESIS SIMULATION}
+add_file "../../common/lib/src/synchronizerRtl.vhd" {SYNTHESIS SIMULATION}
+add_file "../../common/lib/src/edgedetectorRtl.vhd" {SYNTHESIS SIMULATION}
+add_file "../../common/lib/src/nShiftRegRtl.vhd" {SYNTHESIS SIMULATION}
+add_file "../../common/spi/src/spiSlave-e.vhd" {SYNTHESIS SIMULATION}
+add_file "../../common/spi/src/spiSlave-rtl_sclk-a.vhd" {SYNTHESIS SIMULATION}
 add_file "../../common/lib/src/addr_decoder.vhd" {SYNTHESIS SIMULATION}
 add_file "../../common/lib/src/edgedet.vhd" {SYNTHESIS SIMULATION}
 add_file "../../common/lib/src/req_ack.vhd" {SYNTHESIS SIMULATION}

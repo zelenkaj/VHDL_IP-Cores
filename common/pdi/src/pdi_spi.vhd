@@ -39,6 +39,8 @@ USE ieee.std_logic_1164.all;
 USE ieee.std_logic_arith.all;
 USE ieee.std_logic_unsigned.all;
 
+use work.global.all;
+
 entity pdi_spi is
     generic (
         spiSize_g            : integer    := 8;
@@ -50,7 +52,7 @@ entity pdi_spi is
     port (
         -- SPI
         spi_clk                : in     std_logic;
-        spi_sel                : in     std_logic;
+        spi_sel_n                : in     std_logic;
         spi_miso            : out     std_logic;
         spi_mosi            : in     std_logic;
         -- clock for AP side
@@ -98,6 +100,8 @@ signal    dout                :          std_logic_vector(spiSize_g-1 downto 0);
 signal    valid                :         std_logic;
 --
 signal ap_byteenable_s        :        std_logic_vector(ap_byteenable'range);
+
+signal spi_miso_s, spi_miso_t : std_logic;
 begin
 
     clk <= ap_clk;
@@ -288,25 +292,28 @@ begin
         end if;
     end process;
 
-    theSpiCore : entity work.spi
-    generic map (
-        frameSize_g            => spiSize_g,
-        cpol_g                => cpol_g,
-        cpha_g                => cpha_g
-    )
-    port map (
-        -- Control Interface
-        clk                    => clk,
-        rst                    => rst,
-        din                    => din,
-        load                => load,
-        dout                => dout,
-        valid                => valid,
-        -- SPI
-        sck                    => spi_clk,
-        ss                    => spi_sel,
-        miso                => spi_miso,
-        mosi                => spi_mosi
-    );
+    theRealSpiCore : entity work.spiSlave
+        generic map (
+            gRegisterSize => spiSize_g,
+            gPolarity => booleanToInteger(cpol_g),
+            gPhase => booleanToInteger(cpha_g),
+            gShiftDir => 1 --fixed to MSB first
+        )
+        port map (
+            iArst => rst,
+            iClk => clk,
+            iLoadData => din,
+            iLoad => load,
+            oReadData => dout,
+            oValid => valid,
+            -- SPI
+            iSpiClk => spi_clk,
+            inSpiSel => spi_sel_n,
+            oSpiMiso => spi_miso_s,
+            oSpiMiso_t => spi_miso_t,
+            iSpiMosi => spi_mosi
+        );
+
+    spi_miso <= spi_miso_s when spi_miso_t = cActivated else 'Z';
 
 end architecture rtl;
