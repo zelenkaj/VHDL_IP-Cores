@@ -52,6 +52,8 @@ entity protStream is
         -- Stream interface
         --! Stream interface data width
         gStreamDataWidth : natural := 8;
+        --! Skip first packets
+        gStreamSkipNum  : natural := 4;
         -- Bus interface
         --! Bus interface data width
         gBusDataWidth : natural := 32;
@@ -186,6 +188,16 @@ architecture rtl of protStream is
     signal load : std_logic;
     --! Load next
     signal load_next : std_logic;
+
+    --! Skip counter
+    signal skipCnt          : std_logic_vector(logDualis(gStreamSkipNum) downto 0);
+    --! Skip counter next
+    signal skipCnt_next     : std_logic_vector(logDualis(gStreamSkipNum) downto 0);
+    --! Skip counter done
+    signal skipCnt_done     : std_logic;
+    --! Skip count value
+    constant cStreamSkipNum : std_logic_vector :=
+            std_logic_vector(to_unsigned(gStreamSkipNum, skipCnt'length));
 begin
     -- check generic
     assert (gBusDataWidth >= gStreamDataWidth)
@@ -211,14 +223,19 @@ begin
             fsm <= cFsmRst;
             firstLoad <= cInactivated;
             load <= cInactivated;
+            skipCnt     <= (others => cInactivated);
         elsif rising_edge(iClk) then
             wrReg <= wrReg_next;
             rdReg <= rdReg_next;
             fsm <= fsm_next;
             firstLoad <= firstLoad_next;
             load <= load_next;
+            skipCnt     <= skipCnt_next;
         end if;
     end process;
+
+    skipCnt_done <= cActivated when skipCnt = cStreamSkipNum else
+                    cInactivated;
 
     --! The combinational process assigns the next signals.
     comb : process (
@@ -228,6 +245,8 @@ begin
         iSrst,
         firstLoad,
         load,
+        skipCnt,
+        skipCnt_done,
         iStreamValid,
         iStreamValidData,
         iBusWaitrequest,
@@ -241,6 +260,7 @@ begin
         fsm_next <= fsm;
         firstLoad_next <= firstLoad;
         load_next <= cInactivated;
+        skipCnt_next    <= skipCnt;
         oStreamLoadData <= (others => cInactivated);
 
         -- protocol synchronous reset
@@ -256,6 +276,9 @@ begin
             wrReg_next.nDone <= cnInactivated;
             rdReg_next.addr <= cRdStartAddr;
             rdReg_next.nDone <= cnInactivated;
+
+            -- initialize skip counter to zero
+            skipCnt_next    <= (others => cInactivated);
         else
             -- load data after valid data
             if rdReg.nDone = cnInactivated then
@@ -269,10 +292,18 @@ begin
 
             -- incr/decr levels
             if iStreamValid = cActivated and wrReg.nDone = cnInactivated then
-                wrReg_next.level <= wrReg.level + 1;
+                if skipCnt_done = cActivated then
+                    wrReg_next.level <= wrReg.level + 1;
+                else
+                    skipCnt_next <= std_logic_vector(unsigned(skipCnt) + 1);
+                end if;
             end if;
             if load = cActivated and rdReg.nDone = cnInactivated then
-                rdReg_next.level <= rdReg.level - 1;
+                if skipCnt_done = cActivated then
+                    rdReg_next.level <= rdReg.level - 1;
+                else
+                    -- skipCnt handled with valids
+                end if;
             end if;
 
             -- Assign valid stream data to write buffer.

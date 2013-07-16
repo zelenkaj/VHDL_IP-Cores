@@ -47,6 +47,7 @@ use work.global.all;
 entity tbProtStream is
     generic (
         gStreamDataWidth : natural := 8;
+        gStreamSkipNum      : natural := 4;
         gBusDataWidth : natural := 8;
         gBusAddrWidth : natural := 8;
         gWrBufBase : natural := 16#00#;
@@ -122,6 +123,17 @@ begin
             srst <= cInactivated;
             wait until rising_edge(clk);
 
+            if gStreamSkipNum > 0 then
+                for i in 0 to gStreamSkipNum-1 loop
+                    wait for cWaitPeriod;
+                    wait until rising_edge(clk);
+                    valid <= cActivated;
+                    validData <= (others => cActivated);
+                    wait until rising_edge(clk);
+                    valid <= cInactivated;
+                end loop;
+            end if;
+
             for i in 0 to 2*MAX(cWrBufSize, cRdBufSize)-1 loop
                 wait for cWaitPeriod;
                 wait until rising_edge(clk);
@@ -143,6 +155,7 @@ begin
     DUT : entity work.protStream
         generic map (
             gStreamDataWidth => gStreamDataWidth,
+            gStreamSkipNum      => gStreamSkipNum,
             gBusDataWidth => gBusDataWidth,
             gBusAddrWidth => gBusAddrWidth,
             gWrBufBase => cWrBufBase,
@@ -217,17 +230,24 @@ begin
     end process;
 
     checkBus : process(rst, clk)
-        variable vTmp : natural;
-        variable vAddr : natural;
+        variable vPattern       : natural;
+        variable vPattern_ref   : natural;
+        variable vAddr          : natural;
+        variable vAddr_ref      : natural;
     begin
         if rst = cActivated then
         elsif rising_edge(clk) then
             -- check bus write
             if write = cActivated and waitrequest = cInactivated then
                 for i in gBusDataWidth/gStreamDataWidth-1 downto 0 loop
-                    vTmp := to_integer(unsigned(writedata((i+1)*gStreamDataWidth-1 downto i*gStreamDataWidth)));
-                    assert(vTmp = (i + gBusDataWidth/gStreamDataWidth*busWrite_cnt))
-                    report "Wrong pattern is written to bus!"
+                    vPattern := to_integer(unsigned(writedata((i+1)*gStreamDataWidth-1 downto i*gStreamDataWidth)));
+                    vPattern_ref := i + gBusDataWidth/gStreamDataWidth*busWrite_cnt;
+                    assert(vPattern = vPattern_ref)
+                    report "Wrong pattern is written to bus! (" &
+                            " shall = " & integer'image(vPattern_ref) &
+                            " | " &
+                            " is = " & integer'image(vPattern) &
+                            ")"
                     severity failure;
                 end loop;
             end if;
@@ -236,12 +256,22 @@ begin
             if waitrequest = cInactivated then
                 vAddr := to_integer(unsigned(address));
                 if write = cActivated then
-                    assert (vAddr = (busWrite_cnt * gBusDataWidth/cByte + cWrBufBase))
-                    report "Bus write address is wrong!"
+                    vAddr_ref := busWrite_cnt * gBusDataWidth/cByte + cWrBufBase;
+                    assert (vAddr = vAddr_ref)
+                    report "Bus write address is wrong!(" &
+                            " shall = " & integer'image(vAddr_ref) &
+                            " | " &
+                            " is = " & integer'image(vAddr) &
+                            ")"
                     severity failure;
                 elsif read = cActivated then
-                    assert (vAddr = (busRead_cnt * gBusDataWidth/cByte + cRdBufBase))
-                    report "Bus read address is wrong!"
+                    vAddr_ref := busRead_cnt * gBusDataWidth/cByte + cRdBufBase;
+                    assert (vAddr = vAddr_ref)
+                    report "Bus read address is wrong!(" &
+                            " shall = " & integer'image(vAddr_ref) &
+                            " | " &
+                            " is = " & integer'image(vAddr) &
+                            ")"
                     severity failure;
                 end if;
             end if;
@@ -252,21 +282,32 @@ begin
         variable vLoadData : natural;
         variable vBusRead : natural;
         variable vReaddata : std_logic_vector(readdata'range);
+        variable vSkipCnt   : natural;
     begin
         if rst = cActivated then
         elsif rising_edge(clk) then
+            if srst = cActivated then
+                vSkipCnt := 0;
             -- check load
-            if load = cActivated then
-                vLoadData := to_integer(unsigned(loadData));
-                vReaddata := std_logic_vector(unsigned(readdata) - 1);
-                for i in gBusDataWidth/gStreamDataWidth-1 downto 0 loop
-                    if i = streamLoad_cnt then
-                        vBusRead := to_integer(unsigned(vReaddata((i+1)*gStreamDataWidth-1 downto i*gStreamDataWidth)));
-                        assert (vLoadData = vBusRead)
-                        report "Wrong data is loaded to stream!"
-                        severity failure;
-                    end if;
-                end loop;
+            elsif load = cActivated then
+                if vSkipCnt < gStreamSkipNum then
+                    vSkipCnt := vSkipCnt + 1;
+                else
+                    vLoadData := to_integer(unsigned(loadData));
+                    vReaddata := std_logic_vector(unsigned(readdata) - 1);
+                    for i in gBusDataWidth/gStreamDataWidth-1 downto 0 loop
+                        if i = streamLoad_cnt then
+                            vBusRead := to_integer(unsigned(vReaddata((i+1)*gStreamDataWidth-1 downto i*gStreamDataWidth)));
+                            assert (vLoadData = vBusRead)
+                            report "Wrong data is loaded to stream! (" &
+                                " shall = " & integer'image(vBusRead) &
+                                " | " &
+                                " is = " & integer'image(vLoadData) &
+                                ")"
+                            severity failure;
+                        end if;
+                    end loop;
+                end if;
             end if;
         end if;
     end process;
