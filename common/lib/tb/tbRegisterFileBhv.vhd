@@ -1,11 +1,13 @@
 -------------------------------------------------------------------------------
 --! @file tbRegisterFileBhv.vhd
 --
---! @brief Testbench for Register file
+--! @brief testbench for Register file
 --
 -------------------------------------------------------------------------------
+-- Entity : btRegisterFile
+-------------------------------------------------------------------------------
 --
---    (c) B&R, 2012
+--    (c) B&R, 2013
 --
 --    Redistribution and use in source and binary forms, with or without
 --    modification, are permitted provided that the following conditions
@@ -37,152 +39,93 @@
 --    POSSIBILITY OF SUCH DAMAGE.
 --
 -------------------------------------------------------------------------------
+
 -- Design unit header --
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use work.global.all;
 
+use work.global.all;
 
 entity tbRegisterFile is
 end tbRegisterFile;
 
 architecture Bhv of tbRegisterFile is
 
----- Component declarations -----
+    constant cAddressWidth          : natural := 3;
+    constant cWordWidth             : natural := 32;
+    constant cPeriode               : time := 20 ns;
+    ---- Signal declarations used on the diagram ----
 
-component busMaster
-  generic(
-       gAddrWidth : integer := 32;
-       gDataWidth : integer := 32;
-       gStimuliFile : string := "name_TB_stim.txt"
-  );
-  port (
-       iAck : in std_logic;
-       iClk : in std_logic;
-       iEnable : in std_logic;
-       iReaddata : in std_logic_vector(gDataWidth-1 downto 0);
-       iRst : in std_logic;
-       oAddress : out std_logic_vector(gAddrWidth-1 downto 0);
-       oByteenable : out std_logic_vector(gDataWidth/8-1 downto 0);
-       oDone : out std_logic;
-       oRead : out std_logic;
-       oSelect : out std_logic;
-       oWrite : out std_logic;
-       oWritedata : out std_logic_vector(gDataWidth-1 downto 0)
-  );
-end component;
-component clkgen
-  generic(
-       gPeriod : time := 20 ns
-  );
-  port (
-       iDone : in std_logic;
-       oClk : out std_logic
-  );
-end component;
-component enableGen
-  generic(
-       gEnableDelay : time := 100 ns
-  );
-  port (
-       iReset : in std_logic;
-       oEnable : out std_logic;
-       onEnable : out std_logic
-  );
-end component;
-component registerFile
-  generic(
-       gRegCount : natural := 8;
-       gRegDataWidth : natural := 32
-  );
-  port (
-       iAddrA : in std_logic_vector(LogDualis(gRegCount)-1 downto 0);
-       iAddrB : in std_logic_vector(LogDualis(gRegCount)-1 downto 0);
-       iClk : in std_logic;
-       iRst : in std_logic;
-       iWriteA : in std_logic;
-       iWriteB : in std_logic;
-       iWritedataA : in std_logic_vector(gRegDataWidth-1 downto 0);
-       iWritedataB : in std_logic_vector(gRegDataWidth-1 downto 0);
-       oReaddataA : out std_logic_vector(gRegDataWidth-1 downto 0);
-       oReaddataB : out std_logic_vector(gRegDataWidth-1 downto 0)
-  );
-end component;
-
-----     Constants     -----
-constant VCC_CONSTANT   : std_logic := '1';
-constant GND_CONSTANT   : std_logic := '0';
-
----- Signal declarations used on the diagram ----
-
-signal clk : std_logic;
-signal done : std_logic;
-signal GND : std_logic;
-signal rst : std_logic;
-signal VCC : std_logic;
-signal wr : std_logic;
-signal addr : std_logic_vector (2 downto 0);
-signal readData : std_logic_vector (31 downto 0);
-signal writeData : std_logic_vector (31 downto 0);
+    signal Clk, Rst                 : std_logic := cActivated;
+    signal Error, Done              : std_logic;
+    signal AckA, EnableA            : std_logic;
+    signal ReadA, WriteA, SelectA   : std_logic;
+    signal WriteB                   : std_logic;
+    signal ByteenableA, ByteenableB : std_logic_vector(cWordWidth/8-1 downto 0);
+    signal AddressA, AddressB       : std_logic_vector(cAddressWidth-1 downto 0);
+    signal ReadDataA, ReadDataB     : std_logic_vector(cWordWidth-1 downto 0);
+    signal WriteDataA, WriteDataB   : std_logic_vector(cWordWidth-1 downto 0);
 
 begin
 
-----  Component instantiations  ----
+    WriteB          <= cInactivated;
+    ByteenableB     <= (others => cInactivated);
+    AddressB        <= (others => cInactivated);
+    WriteDataB      <= (others => cInactivated);
 
-DUT : registerFile
-  port map(
-       iAddrA => addr( 2 downto 0 ),
-       iAddrB => addr( 2 downto 0 ),
-       iClk => clk,
-       iRst => rst,
-       iWriteA => wr,
-       iWriteB => GND,
-       iWritedataA => writeData( 31 downto 0 ),
-       iWritedataB => writeData( 31 downto 0 ),
-       oReaddataB => readData( 31 downto 0 )
-  );
+    EnableA         <= cActivated;
+    AckA            <= cActivated;
+    Clk             <= not Clk after cPeriode/2 when Done /= cActivated else cInactivated;
+    Rst             <= cInactivated after 2*cPeriode;
 
-U1 : enableGen
-  generic map (
-       gEnableDelay => 100 ns
-  )
-  port map(
-       iReset => GND,
-       onEnable => rst
-  );
+    ----  Component instantiations  ----
+    DUT : entity work.registerFile(Rtl)
+        generic map(
+            gRegCount   => 2**cAddressWidth
+        )
+        port map(
+        iClk               => Clk,
+        iRst               => Rst,
+        iWriteA            => WriteA,
+        iWriteB            => WriteB,
+        iByteenableA       => ByteenableA,
+        iByteenableB       => ByteenableB,
+        iAddrA             => AddressA,
+        iAddrB             => AddressB,
+        iWritedataA        => WriteDataA,
+        oReaddataA         => ReadDataA,
+        iWritedataB        => WriteDataB,
+        oReaddataB         => ReadDataB
+      );
 
-U2 : clkgen
-  generic map (
-       gPeriod => 20 ns
-  )
-  port map(
-       iDone => done,
-       oClk => clk
-  );
+    busMaster : entity work.busMaster(Bhv)
+      generic map (
+           gAddrWidth       => cAddressWidth,
+           gDataWidth       => cWordWidth,
+           gStimuliFile     => "../../lib/tb/tbRegisterFile_stim.txt"
+      )
+      port map(
+            iRst            => Rst,
+            iClk            => Clk,
+            iEnable         => EnableA,
+            iAck            => AckA,
+            iReaddata       => ReadDataA,
+            oWrite          => WriteA,
+            oRead           => ReadA,
+            oSelect         => SelectA,
+            oAddress        => AddressA,
+            oByteenable     => ByteenableA,
+            oWritedata      => WriteDataA,
+            oError          => Error,
+            oDone           => Done
+      );
 
-U3 : busMaster
-  generic map (
-       gAddrWidth => 3,
-       gDataWidth => 32,
-       gStimuliFile => "lib/tb/tbRegisterFile_stim.txt"
-  )
-  port map(
-       iAck => VCC,
-       iClk => clk,
-       iEnable => VCC,
-       iReaddata => readData( 31 downto 0 ),
-       iRst => rst,
-       oAddress => addr( 2 downto 0 ),
-       oDone => done,
-       oWrite => wr,
-       oWritedata => writeData( 31 downto 0 )
-  );
+      AssertBusMaster: process (Error)
+      begin
+            if Error = cActivated then
+                assert false report "Simulation of tbRegisterFileBhv FAILED" severity failure;
+            end if;
+      end process AssertBusMaster;
 
-
----- Power , ground assignment ----
-
-GND <= GND_CONSTANT;
-VCC <= VCC_CONSTANT;
-
-end Bhv;
+end architecture Bhv;
