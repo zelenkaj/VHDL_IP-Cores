@@ -39,7 +39,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 library work;
-use global.all;
+use work.global.all;
 
 entity enableGen is
     generic (
