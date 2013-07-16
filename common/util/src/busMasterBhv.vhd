@@ -269,7 +269,7 @@ begin
 
             when s_REGISTER =>
                     if fsmTrigger'event then                    -- now stable values are registered
-                        InterpreterState <= s_WAIT;
+                        InterpreterState <= s_WAIT after 10 ps;
                     end if;
 
             when s_WAIT =>
