@@ -48,30 +48,30 @@ entity tbTripleBuf is
 end tbTripleBuf;
 
 architecture bhv of tbTripleBuf is
-    signal clk : std_logic;
-    signal rst : std_logic;
-    signal done : std_logic;
-    signal detErr_col : std_logic := cInactivated;
-    signal detErr_new : std_logic := cInactivated;
+    signal clk          : std_logic;
+    signal rst          : std_logic;
+    signal done         : std_logic;
+    signal detErr_col   : std_logic := cInactivated;
+    signal detErr_new   : std_logic := cInactivated;
 
-    signal stimVec : std_logic_vector(1 downto 0);
-    alias pro_trig : std_logic is stimVec(1);
-    alias con_trig : std_logic is stimVec(0);
-    signal stimVec_ones : std_logic;
-    signal stimVec_ones_l : std_logic;
+    signal stimVec          : std_logic_vector(1 downto 0);
+    alias pro_trig          : std_logic is stimVec(1);
+    alias con_trig          : std_logic is stimVec(0);
+    signal stimVec_ones     : std_logic;
+    signal stimVec_ones_l   : std_logic;
 
-    signal con_sel : std_logic_vector(1 downto 0);
-    signal pro_sel : std_logic_vector(1 downto 0);
-    signal pro_sel_l : std_logic_vector(1 downto 0);
+    signal con_sel      : std_logic_vector(1 downto 0);
+    signal pro_sel      : std_logic_vector(1 downto 0);
+    signal pro_sel_l    : std_logic_vector(1 downto 0);
 begin
     DUT : entity work.tripleBuf
         port map (
-            iRst => rst,
-            iClk => clk,
-            iPro_trig => pro_trig,
-            oPro_sel => pro_sel,
-            iCon_trig => con_trig,
-            oCon_sel => con_sel
+            iRst        => rst,
+            iClk        => clk,
+            iPro_trig   => pro_trig,
+            oPro_sel    => pro_sel,
+            iCon_trig   => con_trig,
+            oCon_sel    => con_sel
         );
 
     detErr_col <=   cActivated when rst = cInactivated and
@@ -105,9 +105,9 @@ begin
 
     theStim : process
     begin
-        done <= cInactivated;
-        pro_trig <= cInactivated;
-        con_trig <= cInactivated;
+        done        <= cInactivated;
+        pro_trig    <= cInactivated;
+        con_trig    <= cInactivated;
         wait until rst = cInactivated;
         wait until rising_edge(clk);
 

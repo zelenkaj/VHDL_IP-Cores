@@ -49,17 +49,17 @@ use work.global.all;
 entity tripleBuf is
     port (
         --! Global reset signal
-        iRst : in std_logic;
+        iRst        : in std_logic;
         --! Global clock, producer and consumer must be synchronous
-        iClk : in std_logic;
+        iClk        : in std_logic;
         --! Producer trigger
-        iPro_trig : in std_logic;
+        iPro_trig   : in std_logic;
         --! Producer buffer select
-        oPro_sel : out std_logic_vector(1 downto 0);
+        oPro_sel    : out std_logic_vector(1 downto 0);
         --! Consumer trigger
-        iCon_trig : in std_logic;
+        iCon_trig   : in std_logic;
         --! Consumer buffer select
-        oCon_sel : out std_logic_vector(1 downto 0)
+        oCon_sel    : out std_logic_vector(1 downto 0)
     );
 end tripleBuf;
 
@@ -68,24 +68,28 @@ architecture rtl of tripleBuf is
     subtype tTriBuf is std_logic_vector(1 downto 0);
 
     --! consumer initialisation (must not be zero or equal to producer's!)
-    constant cTriBuf_con : tTriBuf := "01";
+    constant cTriBuf_con    : tTriBuf := "01";
     --! producer initialisation (must not be zero or equal to consumer's!)
-    constant cTriBuf_pro : tTriBuf := "10";
+    constant cTriBuf_pro    : tTriBuf := "10";
+    --! latest initialisation buffer (must not be zero or equal to consumer's!)
+    constant cTriBuf_latest : tTriBuf := "11";
 
     -- register type
     type tReg is record
-        pro : tTriBuf;
-        con : tTriBuf;
+        pro     : tTriBuf;
+        con     : tTriBuf;
+        latest  : tTriBuf;
     end record;
 
     -- regsiter initialisation
     constant cRegInit : tReg := (
         cTriBuf_pro,
-        cTriBuf_con
+        cTriBuf_con,
+        cTriBuf_latest
     );
 
     -- registers
-    signal reg : tReg;
+    signal reg      : tReg;
     -- registers next
     signal reg_next : tReg;
 begin
@@ -102,29 +106,37 @@ begin
         end if;
     end process;
 
+    --! This process assigns the consumer and producer instance to a free
+    --! triple buffer. The consumer is always assigned to the latest buffer,
+    --! which is basically assigned to the lastly produced buffer (by the
+    --! producer). The producer is assigned to the buffer that is not assigned
+    --! to itself and the consumer (xor operation).
+    --! This process ensures consuming consistent and latest data.
     comProc : process (
         iPro_trig,
         iCon_trig,
         reg
     )
-        variable vFreeBuf : tTriBuf;
     begin
         --default
         reg_next <= reg;
 
-        -- calculate free buffer
-        vFreeBuf := reg.con xor reg.pro;
-
         -- handle special case -> both instances request buffer change
         if iPro_trig = cActivated and iCon_trig = cActivated then
             -- assign latest buffer to consumer, since producer gets free buffer
-            reg_next.con <= reg.pro;
+            reg_next.con    <= reg.pro;
         end if;
 
         if iPro_trig = cActivated then
-            reg_next.pro <= vFreeBuf;
+            -- producer gets free buffer
+            reg_next.pro    <= reg.con xor reg.pro;
+
+            -- mark latest buffer for next consumer switch
+            reg_next.latest <= reg.pro;
         elsif iCon_trig = cActivated then
-            reg_next.con <= vFreeBuf;
+            -- assign latest buffer to consumer
+            -- Note: If latest does not change, consumer stays at this buffer!
+            reg_next.con    <= reg.latest;
         end if;
     end process;
 end rtl;
