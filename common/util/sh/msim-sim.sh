@@ -51,7 +51,7 @@ do
 done
 
 #compile source files
-vcom $VHDL_STD -work work $SRC_LIST
+vcom $VHDL_STD -work work $SRC_LIST -quiet
 if test $? -ne 0
 then
     exit 1
@@ -63,7 +63,7 @@ if [ -n "$NO_RUN" ]; then
 fi
 
 #simulate design
-vsim $OPTIMIZATION $TOP_LEVEL -c -do $DOFILE -lib work $GEN_LIST
+vsim $OPTIMIZATION $TOP_LEVEL -c -do $DOFILE -lib work $GEN_LIST -quiet
 
 #catch simulation return
 RET=$?
