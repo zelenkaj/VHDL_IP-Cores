@@ -67,6 +67,8 @@ entity magicBridge is
     generic (
         --! number of static address spaces
         gAddressSpaceCount      : natural := 2;
+        --! select wheather DPRAM or registers will be used as memory (false = 0, true /= 0)
+        gUseMemBlock            : integer := 1;
         --! base addresses in static address space (note: last-1 = high address)
         gBaseAddressArray       : tArrayStd32 :=
         (x"0000_1000" , x"0000_2000" , x"0000_3000")
@@ -116,67 +118,14 @@ end magicBridge;
 --! base addresses in the static memory space.
 -------------------------------------------------------------------------------
 architecture Rtl of magicBridge is
-
-    --! address decoder
-    component addr_decoder
-        generic(
-            addrWidth_g : integer := 32;
-            baseaddr_g : integer := 4096;
-            highaddr_g : integer := 8191);
-        port(
-            selin : in std_logic;
-            addr : in std_logic_vector(addrWidth_g-1 downto 0);
-            selout : out std_logic);
-    end component;
-
-    --! binary encoder
-    component binaryEncoder
-        generic(
-            gDataWidth : NATURAL := 8);
-        port(
-            iOneHot : in STD_LOGIC_VECTOR(gDataWidth-1 downto 0);
-            oBinary : out STD_LOGIC_VECTOR(LogDualis(gDataWidth)-1 downto 0));
-    end component;
-
-
-    --! register file
-    component registerFile
-        generic(
-            gRegCount : NATURAL := 8);
-        port(
-            iClk : in STD_LOGIC;
-            iRst : in STD_LOGIC;
-            iWriteA : in STD_LOGIC;
-            iWriteB : in STD_LOGIC;
-            iByteenableA:   in std_logic_vector;
-            iByteenableB:   in std_logic_vector;
-            iAddrA : in STD_LOGIC_VECTOR(LogDualis(gRegCount)-1 downto 0);
-            iAddrB : in STD_LOGIC_VECTOR(LogDualis(gRegCount)-1 downto 0);
-            iWritedataA : in STD_LOGIC_VECTOR;
-            oReaddataA : out STD_LOGIC_VECTOR;
-            iWritedataB : in STD_LOGIC_VECTOR;
-            oReaddataB : out STD_LOGIC_VECTOR);
-    end component;
-
-
-    --lut file
-    component lutFile
-    generic(
-        gLutCount : NATURAL := 4;
-        gLutWidth : NATURAL := 32;
-        gLutInitValue : STD_LOGIC_VECTOR := x"1111_1111"&x"2222_2222"&x"3333_3333"&x"4444_4444");
-    port(
-        iAddrRead : in STD_LOGIC_VECTOR(LogDualis(gLutCount)-1 downto 0);
-        oData : out STD_LOGIC_VECTOR);
-    end component;
-
+    constant cDPRAM_wordwidth       : natural := 32;
     constant cByteenableAllZero : std_logic_vector(iBaseSetByteenable'range) :=
-    (others => cInactivated);
+        (others => cInactivated);
 
     constant cBaseAddressArrayStd   : std_logic_vector
-    ((gAddressSpaceCount+1)*cArrayStd32ElementSize-1 downto 0) :=
-    CONV_STDLOGICVECTOR(gBaseAddressArray, gBaseAddressArray'length);
-    --! convert address array into stream
+        ((gAddressSpaceCount+1)*cArrayStd32ElementSize-1 downto 0) :=
+        CONV_STDLOGICVECTOR(gBaseAddressArray, gBaseAddressArray'length);
+        --! convert address array into stream
 
     signal addrDecSelOneHot         : std_logic_vector
     (gAddressSpaceCount-1 downto 0);
@@ -188,87 +137,128 @@ architecture Rtl of magicBridge is
     --! selected static lut file base offset
     signal addrSpaceOffset          : std_logic_vector(iBridgeAddress'range);
     --! address offset within selected static space
-    signal registerFileBase         : std_logic_vector(oBridgeAddress'range);
+    signal registerFileBase         : std_logic_vector(iBaseSetData'range);
     --! selected dynamic register file base offset
     signal translateAddress         : std_logic_vector
-    (MAX(iBridgeAddress'high, oBridgeAddress'high) downto iBridgeAddress'low);
+    (MAX(iBaseSetData'high, oBridgeAddress'high) downto iBridgeAddress'low);
+
+    --! signals for DPRAM
+    signal DPRAM_WritedataA, DPRAM_WritedataB   : std_logic_vector(cDPRAM_wordwidth-1 downto 0);
+    signal DPRAM_ReaddataA, DPRAM_ReaddataB     : std_logic_vector(cDPRAM_wordwidth-1 downto 0);
+    signal DPRAM_ByteenableA, DPRAM_ByteenableB : std_logic_vector(cDPRAM_wordwidth/8-1 downto 0);
+
 
 begin
 
+    --! export one hot code
+    oBridgeSelect       <= addrDecSelOneHot;
+
+    --! export or'd one hot code
+    oBridgeSelectAny    <= OR_REDUCE(addrDecSelOneHot);
+
     --! Generate Address Decoders
     genAddressDecoder : for i in 0 to gAddressSpaceCount-1 generate
-        insAddressDecoder : addr_decoder
+        insAddressDecoder : entity work.addr_decoder
         generic map(
-            addrWidth_g => iBridgeAddress'length,
-            baseaddr_g => to_integer(
+            addrWidth_g         => iBridgeAddress'length,
+            baseaddr_g          => to_integer(
             unsigned(gBaseAddressArray(i)(iBridgeAddress'range))),
-            highaddr_g => to_integer(
+            highaddr_g          => to_integer(
             unsigned(gBaseAddressArray(i+1)(iBridgeAddress'range))-1)
             )
         port map(
-            selin => iBridgeSelect,
-            addr => iBridgeAddress,
-            selout => addrDecSelOneHot(i)
+            selin               => iBridgeSelect,
+            addr                => iBridgeAddress,
+            selout              => addrDecSelOneHot(i)
             );
     end generate;
 
-    --! export one hot code
-    oBridgeSelect <= addrDecSelOneHot;
-
-    --! export or'd one hot code
-    oBridgeSelectAny <= OR_REDUCE(addrDecSelOneHot);
-
     --! Convert one hot from address decoder to binary
-    insBinaryEncoder : binaryEncoder
+    insBinaryEncoder : entity work.binaryEncoder
     generic map(
-        gDataWidth => gAddressSpaceCount
+        gDataWidth              => gAddressSpaceCount
         )
     port map(
-        iOneHot => addrDecSelOneHot,
-        oBinary => addrDecSelBinary
+        iOneHot                 => addrDecSelOneHot,
+        oBinary                 => addrDecSelBinary
         );
 
     --! select static base address in lut file
-    insLutFile : lutFile
+    insLutFile : entity work.lutFile
     generic map(
-        gLutCount => gAddressSpaceCount,
-        gLutWidth => cArrayStd32ElementSize,
-        gLutInitValue => cBaseAddressArrayStd
+        gLutCount               => gAddressSpaceCount,
+        gLutWidth               => cArrayStd32ElementSize,
+        gLutInitValue           => cBaseAddressArrayStd
         (cBaseAddressArrayStd'left downto cArrayStd32ElementSize)
         --! omit high address of last memory map
         )
     port map(
-        iAddrRead => addrDecSelBinary,
-        oData => lutFileBase
+        iAddrRead               => addrDecSelBinary,
+        oData                   => lutFileBase
         );
 
     --! calculate address offset within static space
     addrSpaceOffset <= std_logic_vector(
     unsigned(iBridgeAddress) - unsigned(lutFileBase));
 
-    --! select dynamic base address in register file
-    insRegFile : registerFile
-    generic map(
-        gRegCount => gAddressSpaceCount
+    REG: if gUseMemBlock = 0 generate
+        --! select dynamic base address in register file
+        insRegFile : entity work.registerFile
+        generic map(
+            gRegCount           => gAddressSpaceCount
+            )
+        port map(
+            iClk                => iClk,
+            iRst                => iRst,
+            iWriteA             => iBaseSetWrite,
+            iWriteB             => cInactivated, --! write port B unused
+            iByteenableA        => iBaseSetByteenable,
+            iByteenableB        => cByteenableAllZero,
+            iAddrA              => iBaseSetAddress,
+            iAddrB              => addrDecSelBinary,
+            iWritedataA         => iBaseSetData,
+            oReaddataA          => oBaseSetData,
+            iWritedataB         => iBaseSetData, --! write port B unused
+            oReaddataB          => registerFileBase
+            );
+    end generate REG;
+
+    RAM: if gUseMemBlock /= 0 generate
+
+        DPRAM_ByteenableA(iBaseSetByteenable'range) <= iBaseSetByteenable;
+        DPRAM_WritedataA(iBaseSetData'range)        <= iBaseSetData;
+        oBaseSetData                                <= DPRAM_ReaddataA(oBaseSetData'range);
+        DPRAM_ByteenableB                           <= (others => cInactivated);
+        DPRAM_WritedataB(iBaseSetData'range)        <=  iBaseSetData;
+        registerFileBase                            <= DPRAM_ReaddataB(registerFileBase'range);
+
+        insDPRAM: entity work.dpRam
+        generic map(
+            gWordWidth         => cDPRAM_wordwidth,--iBaseSetData'length,
+            gNumberOfWords     => gAddressSpaceCount
         )
-    port map(
-        iClk => iClk,
-        iRst => iRst,
-        iWriteA => iBaseSetWrite,
-        iWriteB => cInactivated, --! write port B unused
-        iByteenableA => iBaseSetByteenable,
-        iByteenableB => cByteenableAllZero,
-        iAddrA => iBaseSetAddress,
-        iAddrB => addrDecSelBinary,
-        iWritedataA => iBaseSetData,
-        oReaddataA => oBaseSetData,
-        iWritedataB => iBaseSetData, --! write port B unused
-        oReaddataB => registerFileBase
+        port map(
+            iClk_A             => iClk,
+            iWriteEnable_A     => iBaseSetWrite,
+            iAddress_A         => iBaseSetAddress,
+            iByteEnable_A      => DPRAM_ByteenableA,
+            iWritedata_A       => DPRAM_WritedataA,
+            oReaddata_A        => DPRAM_ReaddataA,
+            iClk_B             => iClk,
+            iWriteEnable_B     => cInactivated,
+            iByteEnable_B      => DPRAM_ByteenableB,
+            iAddress_B         => addrDecSelBinary,
+            iWritedata_B       => DPRAM_WritedataB,
+            oReaddata_B        => DPRAM_ReaddataB
         );
 
+    end generate RAM;
+
     --! calculate translated address offset in dynamic space
-    oBridgeAddress <= translateAddress(oBridgeAddress'range);
-    translateAddress <= std_logic_vector(
-    unsigned(registerFileBase) + unsigned(addrSpaceOffset));
+    oBridgeAddress      <= translateAddress(oBridgeAddress'range);
+    translateAddress    <= std_logic_vector(
+            unsigned(registerFileBase) + unsigned(addrSpaceOffset) );
+
+
 
 end Rtl;
