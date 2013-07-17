@@ -5,6 +5,7 @@ ROOT=../../..
 SRC_LIST="common/lib/src/global.vhd \
 common/util/src/clkGenBhv.vhd \
 common/util/src/resetGenBhv.vhd \
+common/tripleBuffer/src/tripleBufferPkg.vhd \
 common/tripleBuffer/src/tripleLogicRtl.vhd \
 common/tripleBuffer/tb/tbTripleLogicBhv.vhd"
 

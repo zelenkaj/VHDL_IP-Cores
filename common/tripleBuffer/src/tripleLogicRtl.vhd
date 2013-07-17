@@ -45,6 +45,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.global.all;
+use work.tripleBufferPkg.all;
 
 entity tripleLogic is
     port (
@@ -55,30 +56,27 @@ entity tripleLogic is
         --! Producer trigger
         iPro_trig   : in std_logic;
         --! Producer buffer select
-        oPro_sel    : out std_logic_vector(1 downto 0);
+        oPro_sel    : out tTripleSel;
         --! Consumer trigger
         iCon_trig   : in std_logic;
         --! Consumer buffer select
-        oCon_sel    : out std_logic_vector(1 downto 0)
+        oCon_sel    : out tTripleSel
     );
 end tripleLogic;
 
 architecture rtl of tripleLogic is
-    --! triple buffer select typ
-    subtype tTriBuf is std_logic_vector(1 downto 0);
-
     --! consumer initialisation (must not be zero or equal to producer's!)
-    constant cTriBuf_con    : tTriBuf := "01";
+    constant cTriBuf_con    : tTripleSel := "01";
     --! producer initialisation (must not be zero or equal to consumer's!)
-    constant cTriBuf_pro    : tTriBuf := "10";
+    constant cTriBuf_pro    : tTripleSel := "10";
     --! latest initialisation buffer (must not be zero or equal to consumer's!)
-    constant cTriBuf_latest : tTriBuf := "11";
+    constant cTriBuf_latest : tTripleSel := "11";
 
     -- register type
     type tReg is record
-        pro     : tTriBuf;
-        con     : tTriBuf;
-        latest  : tTriBuf;
+        pro     : tTripleSel;
+        con     : tTripleSel;
+        latest  : tTripleSel;
     end record;
 
     -- regsiter initialisation

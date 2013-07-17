@@ -43,6 +43,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.global.all;
+use work.tripleBufferPkg.all;
 
 entity tbTripleLogic is
 end tbTripleLogic;
@@ -60,9 +61,9 @@ architecture bhv of tbTripleLogic is
     signal stimVec_ones     : std_logic;
     signal stimVec_ones_l   : std_logic;
 
-    signal con_sel      : std_logic_vector(1 downto 0);
-    signal pro_sel      : std_logic_vector(1 downto 0);
-    signal pro_sel_l    : std_logic_vector(1 downto 0);
+    signal con_sel          : tTripleSel;
+    signal pro_sel          : tTripleSel;
+    signal pro_sel_l        : tTripleSel;
 begin
     DUT : entity work.tripleLogic
         port map (
