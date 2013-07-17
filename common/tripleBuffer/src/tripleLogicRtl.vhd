@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
---! @file tripleBufRtl.vhd
+--! @file tripleLogicRtl.vhd
 --
 --! @brief Triple Buffer Logic
 --
@@ -46,7 +46,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.global.all;
 
-entity tripleBuf is
+entity tripleLogic is
     port (
         --! Global reset signal
         iRst        : in std_logic;
@@ -61,9 +61,9 @@ entity tripleBuf is
         --! Consumer buffer select
         oCon_sel    : out std_logic_vector(1 downto 0)
     );
-end tripleBuf;
+end tripleLogic;
 
-architecture rtl of tripleBuf is
+architecture rtl of tripleLogic is
     --! triple buffer select typ
     subtype tTriBuf is std_logic_vector(1 downto 0);
 

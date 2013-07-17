@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
---! @file tbTripleBufBhv.vhd
+--! @file tbTripleLogicBhv.vhd
 --
 --! @brief Triple Buffer testbench
 --
@@ -44,10 +44,10 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.global.all;
 
-entity tbTripleBuf is
-end tbTripleBuf;
+entity tbTripleLogic is
+end tbTripleLogic;
 
-architecture bhv of tbTripleBuf is
+architecture bhv of tbTripleLogic is
     signal clk          : std_logic;
     signal rst          : std_logic;
     signal done         : std_logic;
@@ -64,7 +64,7 @@ architecture bhv of tbTripleBuf is
     signal pro_sel      : std_logic_vector(1 downto 0);
     signal pro_sel_l    : std_logic_vector(1 downto 0);
 begin
-    DUT : entity work.tripleBuf
+    DUT : entity work.tripleLogic
         port map (
             iRst        => rst,
             iClk        => clk,

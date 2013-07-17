@@ -1,6 +1,5 @@
 #!/usr/bin/tclsh
-# This file provides functions to calculate the PDI triple buffer
-# memory mapping.
+# This file provides functions to calculate the triple buffer memory mapping.
 
 # Gets the internal triple buffer memory mapping (translation value in LUT)
 proc calcTriBufOffset { listSize } {

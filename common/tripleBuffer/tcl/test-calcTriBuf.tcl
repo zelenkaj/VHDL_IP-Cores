@@ -1,7 +1,7 @@
 #!/usr/bin/tclsh
-# This file tests the procedures provided in pdiCalcTriBuf.tcl
+# This file tests the procedures provided in calcTriBuf.tcl
 
-source pdiCalcTriBuf.tcl
+source calcTriBuf.tcl
 
 # Test calcTriBufOffset results:
 # * compare function result with golden list
@@ -50,7 +50,7 @@ proc test_calcTriBufOffset { } {
 }
 
 #test code
-puts "--- pdiCalcTriBuf.tcl ---"
+puts "--- calcTriBuf.tcl ---"
 set ret 0
 
 puts "-> test_calcTriBufOffset"
