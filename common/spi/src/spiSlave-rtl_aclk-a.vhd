@@ -200,15 +200,16 @@ begin
     begin
         --default to avoid latches
         spiReg_next     <= spiReg;
+        spiCap_next     <= spiCap;
         spiLoadReg_next <= spiLoadReg;
         frmCnt_next     <= frmCnt;
         outReg_next     <= outReg;
 
-        -- Spi capture register assigned to Mosi
-        spiCap_next     <= iSpiMosi;
-
         -- Spi Sel enables processes
         if inSpiSel = cnActivated then
+            -- Spi capture register assigned to Mosi
+            spiCap_next     <= iSpiMosi;
+
             -- Shift captured data into shift register
             spiReg_next <= spiReg_sft & spiCap;
 
