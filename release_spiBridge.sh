@@ -11,6 +11,7 @@ fi
 # create dir structure
 echo "create dir structure..."
 mkdir -p release/altera/components
+mkdir -p release/altera/components/sdc
 mkdir -p release/altera/spi/src
 mkdir -p release/common/spi/src
 mkdir -p release/common/lib/src
@@ -18,6 +19,7 @@ mkdir -p release/common/lib/src
 # copy Altera
 echo "copy altera ipcore..."
 cp altera/components/spiBridge_hw.tcl       release/altera/components
+cp altera/components/sdc/spiBridge-aclk.sdc release/altera/components/sdc
 cp altera/spi/src/alteraSpiBridgeRtl.vhd    release/altera/spi/src
 cp common/lib/src/global.vhd                release/common/lib/src
 cp common/lib/src/synchronizerRtl.vhd       release/common/lib/src

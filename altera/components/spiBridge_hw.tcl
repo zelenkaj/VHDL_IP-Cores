@@ -55,6 +55,7 @@ set_module_property ANALYZE_HDL true
 # -----------------------------------------------------------------------------
 # file sets
 # -----------------------------------------------------------------------------
+add_file "../../altera/components/sdc/spiBridge-aclk.sdc" {SYNTHESIS}
 add_file "../../altera/spi/src/alteraSpiBridgeRtl.vhd" {SYNTHESIS SIMULATION}
 add_file "../../common/lib/src/edgedetectorRtl.vhd" {SYNTHESIS SIMULATION}
 add_file "../../common/lib/src/global.vhd" {SYNTHESIS SIMULATION}
