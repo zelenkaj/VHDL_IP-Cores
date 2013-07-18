@@ -71,23 +71,13 @@ architecture bhv of tbSpiSlave is
     --! procedure to shift register
     procedure shiftSpi (
         signal clk          : in std_logic;
-        signal spiClk       : inout std_logic;
-        signal nSel         : out std_logic;
-        variable holdSel    : boolean
+        signal spiClk       : inout std_logic
     ) is
     begin
-        --activate select signal
-        nSel <= cnActivated;
-
         for i in 0 to 2*cRegisterSize-1 loop
             spiClk <= not spiClk;
             wait for cSpiClkPeriod/2;
         end loop;
-
-        if not holdSel then
-            --deactivate select signal
-            nSel <= cnInactivated;
-        end if;
     end procedure;
 
     --! function to swap vector
@@ -242,18 +232,23 @@ begin
         wait until rising_edge(clk);
         wait until rising_edge(clk);
 
+        -- activate select signal
+        nSpiSel         <= cnActivated;
+
         --wait for clock shift time
         wait for cSpiClkShift;
 
-        vHoldSelect := TRUE;
         for i in 0 to cRegisterSize-1 loop
-            if i = cRegisterSize-1 then
-                vHoldSelect := FALSE;
-            end if;
-            shiftSpi(clk, spiClk, nSpiSel, vHoldSelect);
+            shiftSpi(clk, spiClk);
         end loop;
 
-        done <= cActivated;
+        --wait for clock shift time
+        wait for cSpiClkShift;
+
+        -- activate select signal
+        nSpiSel         <= cnInactivated;
+
+        done            <= cActivated;
 
         wait;
     end process;
