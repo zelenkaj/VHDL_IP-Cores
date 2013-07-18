@@ -269,7 +269,9 @@ proc elaboration_callback {} {
     setListCmacro   "TBUF_SIZE"             $bufSize
     setListCmacro   "TBUF_OFFSET"           $inMemMapOffset
     setValCmacro    "TBUF_OFFSET_CONACK"    $baseConAck
+    setValCmacro    "TBUF_SIZE_CONACK"      $ackRegSize
     setValCmacro    "TBUF_OFFSET_PROACK"    $baseProAck
+    setValCmacro    "TBUF_SIZE_PROACK"      $ackRegSize
     setListCmacro   "TBUF_PORTA_ISPRODUCER" $lstIsPro
     setValCmacro    "TBUF_NUM_CON"          $numCon
     setValCmacro    "TBUF_NUM_PRO"          $numPro
