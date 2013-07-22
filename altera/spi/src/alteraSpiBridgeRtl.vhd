@@ -87,6 +87,8 @@ entity alteraSpiBridge is
         -- Bus master
         --! Avalon-MM master bridge address
         avm_bridge_address : out std_logic_vector(gBusAddrWidth-1 downto 0);
+        --! Avalon-MM master bridge byteenable
+        avm_bridge_byteenable : out std_logic_vector(gBusDataWidth/8-1 downto 0);
         --! Avalon-MM master bridge write
         avm_bridge_write : out std_logic;
         --! Avalon-MM master bridge writedata
@@ -140,4 +142,7 @@ begin
 
     -- miso output driver
     coe_spi_miso <= spiMiso when spiMiso_t = cActivated else 'Z';
+
+    -- enable always all available bytes
+    avm_bridge_byteenable <= (others => cActivated);
 end rtl;

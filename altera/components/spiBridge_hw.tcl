@@ -194,6 +194,7 @@ set_interface_property bridge linewrapBursts false
 set_interface_property bridge ENABLED true
 
 add_interface_port bridge avm_bridge_address address Output gbusaddrwidth
+add_interface_port bridge avm_bridge_byteenable byteenable Output (gbusdatawidth/8)
 add_interface_port bridge avm_bridge_write write Output 1
 add_interface_port bridge avm_bridge_writedata writedata Output gbusdatawidth
 add_interface_port bridge avm_bridge_read read Output 1
