@@ -46,14 +46,15 @@ use work.global.all;
 
 entity tbProtStream is
     generic (
-        gStreamDataWidth : natural := 8;
-        gStreamSkipNum      : natural := 4;
-        gBusDataWidth : natural := 8;
-        gBusAddrWidth : natural := 8;
-        gWrBufBase : natural := 16#00#;
-        gWrBufSize : natural := 128;
-        gRdBufBase : natural := 16#80#;
-        gRdBufSize : natural := 128
+        gStreamDataWidth    : natural := 8;
+        gStreamSkipLoads    : natural := 3;
+        gStreamSkipValids   : natural := 4;
+        gBusDataWidth       : natural := 8;
+        gBusAddrWidth       : natural := 8;
+        gWrBufBase          : natural := 16#00#;
+        gWrBufSize          : natural := 128;
+        gRdBufBase          : natural := 16#80#;
+        gRdBufSize          : natural := 128
     );
 end tbProtStream;
 
@@ -74,23 +75,27 @@ architecture bhv of tbProtStream is
     signal done : std_logic;
 
     -- DUT signals
-    signal srst : std_logic;
-    signal load : std_logic;
-    signal loadData : std_logic_vector(gStreamDataWidth-1 downto 0);
-    signal valid : std_logic;
-    signal validData : std_logic_vector(gStreamDataWidth-1 downto 0);
-    signal address : std_logic_vector(gBusAddrWidth-1 downto 0);
-    signal write : std_logic;
-    signal writedata : std_logic_vector(gBusDataWidth-1 downto 0);
-    signal read : std_logic;
-    signal readdata : std_logic_vector(gBusDataWidth-1 downto 0);
-    signal waitrequest : std_logic;
+    signal srst         : std_logic;
+    signal load         : std_logic;
+    signal loadData     : std_logic_vector(gStreamDataWidth-1 downto 0);
+    signal valid        : std_logic;
+    signal validData    : std_logic_vector(gStreamDataWidth-1 downto 0);
+    signal address      : std_logic_vector(gBusAddrWidth-1 downto 0);
+    signal write        : std_logic;
+    signal writedata    : std_logic_vector(gBusDataWidth-1 downto 0);
+    signal read         : std_logic;
+    signal readdata     : std_logic_vector(gBusDataWidth-1 downto 0);
+    signal waitrequest  : std_logic;
 
     -- Bus signals
-    signal ack : std_logic;
-    signal busWrite_cnt : natural;
-    signal busRead_cnt : natural;
-    signal streamLoad_cnt : natural;
+    signal ack              : std_logic;
+    signal busWrite_cnt     : natural;
+    signal busRead_cnt      : natural;
+    signal streamLoad_cnt   : natural;
+    signal skipCnt          : natural;
+    constant cSkipLoads     : natural := gStreamSkipLoads;
+    constant cSkipValids    : natural := gStreamSkipValids;
+    constant cSkipCntMax    : natural := MAX(cSkipLoads, cSkipValids);
 begin
     theRstGen : entity work.resetGen
         port map (
@@ -123,8 +128,8 @@ begin
             srst <= cInactivated;
             wait until rising_edge(clk);
 
-            if gStreamSkipNum > 0 then
-                for i in 0 to gStreamSkipNum-1 loop
+            if cSkipValids > 0 then
+                for i in 0 to cSkipValids-1 loop
                     wait for cWaitPeriod;
                     wait until rising_edge(clk);
                     valid <= cActivated;
@@ -154,14 +159,15 @@ begin
 
     DUT : entity work.protStream
         generic map (
-            gStreamDataWidth => gStreamDataWidth,
-            gStreamSkipNum      => gStreamSkipNum,
-            gBusDataWidth => gBusDataWidth,
-            gBusAddrWidth => gBusAddrWidth,
-            gWrBufBase => cWrBufBase,
-            gWrBufSize => cWrBufSize,
-            gRdBufBase => cRdBufBase,
-            gRdBufSize => cRdBufSize
+            gStreamDataWidth    => gStreamDataWidth,
+            gStreamSkipValids   => gStreamSkipValids,
+            gStreamSkipLoads    => gStreamSkipLoads,
+            gBusDataWidth       => gBusDataWidth,
+            gBusAddrWidth       => gBusAddrWidth,
+            gWrBufBase          => cWrBufBase,
+            gWrBufSize          => cWrBufSize,
+            gRdBufBase          => cRdBufBase,
+            gRdBufSize          => cRdBufSize
         )
         port map (
             iArst => rst,
@@ -187,7 +193,10 @@ begin
     begin
         if rst = cActivated then
             ack <= cInactivated;
-            readdata <= (others => cInactivated);
+            for i in (readdata'length / cByteLength) downto 1 loop
+                readdata(i*cByteLength-1 downto (i-1)*cByteLength) <=
+                    std_logic_vector(to_unsigned(i, cByteLength));
+            end loop;
         elsif rising_edge(clk) then
             ack <= cInactivated;
             if read = cActivated and ack = cInactivated then
@@ -219,7 +228,7 @@ begin
                 busRead_cnt <= busRead_cnt + 1;
             end if;
 
-            if load = cActivated then
+            if load = cActivated and skipCnt >= cSkipLoads then
                 if streamLoad_cnt > 0 then
                     streamLoad_cnt <= streamLoad_cnt - 1;
                 else
@@ -290,36 +299,38 @@ begin
                 vSkipCnt := 0;
             -- check load
             elsif load = cActivated then
-                if vSkipCnt < gStreamSkipNum then
+                if vSkipCnt < cSkipCntMax then
                     vSkipCnt := vSkipCnt + 1;
-                else
-                    vLoadData := to_integer(unsigned(loadData));
-                    vReaddata := std_logic_vector(unsigned(readdata) - 1);
-
-                    --swapping if necessary
-                    case gStreamDataWidth is
-                        when cWordLength =>
-                            vReaddata := wordSwap(vReaddata);
-                        when cByteLength =>
-                            vReaddata := byteSwap(vReaddata);
-                        when others =>
-                            NULL;
-                    end case;
-
-                    for i in gBusDataWidth/gStreamDataWidth-1 downto 0 loop
-                        if i = streamLoad_cnt then
-                            vBusRead := to_integer(unsigned(vReaddata((i+1)*gStreamDataWidth-1 downto i*gStreamDataWidth)));
-                            assert (vLoadData = vBusRead)
-                            report "Wrong data is loaded to stream! (" &
-                                " shall = " & integer'image(vBusRead) &
-                                " | " &
-                                " is = " & integer'image(vLoadData) &
-                                " )"
-                            severity failure;
-                        end if;
-                    end loop;
                 end if;
+
+                vLoadData := to_integer(unsigned(loadData));
+                vReaddata := std_logic_vector(unsigned(readdata) - 1);
+
+                --swapping if necessary
+                case gStreamDataWidth is
+                    when cWordLength =>
+                        vReaddata := wordSwap(vReaddata);
+                    when cByteLength =>
+                        vReaddata := byteSwap(vReaddata);
+                    when others =>
+                        NULL;
+                end case;
+
+                for i in gBusDataWidth/gStreamDataWidth-1 downto 0 loop
+                    if i = streamLoad_cnt then
+                        vBusRead := to_integer(unsigned(vReaddata((i+1)*gStreamDataWidth-1 downto i*gStreamDataWidth)));
+                        assert (vLoadData = vBusRead)
+                        report "Wrong data is loaded to stream! (" &
+                            " shall = " & integer'image(vBusRead) &
+                            " | " &
+                            " is = " & integer'image(vLoadData) &
+                            " )"
+                        severity failure;
+                    end if;
+                end loop;
             end if;
+
+            skipCnt <= vSkipCnt;
         end if;
     end process;
 end bhv;

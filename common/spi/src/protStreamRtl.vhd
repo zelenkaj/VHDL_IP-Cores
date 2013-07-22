@@ -51,52 +51,54 @@ entity protStream is
     generic (
         -- Stream interface
         --! Stream interface data width
-        gStreamDataWidth : natural := 8;
-        --! Skip first packets
-        gStreamSkipNum  : natural := 4;
+        gStreamDataWidth    : natural := 8;
+        --! Skip first loads
+        gStreamSkipLoads    : natural := 3;
+        --! Skip first valids
+        gStreamSkipValids   : natural := 4;
         -- Bus interface
         --! Bus interface data width
-        gBusDataWidth : natural := 32;
+        gBusDataWidth       : natural := 32;
         --! Bus interface address width
-        gBusAddrWidth : natural := 8;
+        gBusAddrWidth       : natural := 8;
         --! Write buffer base
-        gWrBufBase : natural := 16#00#;
+        gWrBufBase          : natural := 16#00#;
         --! Write buffer size
-        gWrBufSize : natural := 128;
+        gWrBufSize          : natural := 128;
         --! Read buffer base
-        gRdBufBase : natural := 16#80#;
+        gRdBufBase          : natural := 16#80#;
         --! Read buffer size
-        gRdBufSize : natural := 128
+        gRdBufSize          : natural := 128
     );
     port (
         --! Asynchronous reset
-        iArst : in std_logic;
+        iArst               : in std_logic;
         --! Clock
-        iClk : in std_logic;
+        iClk                : in std_logic;
         --! Synchronous protocol reset
-        iSrst : in std_logic;
+        iSrst               : in std_logic;
         -- Stream interface
         --! Stream load
-        oStreamLoad : out std_logic;
+        oStreamLoad         : out std_logic;
         --! Stream load data
-        oStreamLoadData : out std_logic_vector(gStreamDataWidth-1 downto 0);
+        oStreamLoadData     : out std_logic_vector(gStreamDataWidth-1 downto 0);
         --! Stream valid
-        iStreamValid : in std_logic;
+        iStreamValid        : in std_logic;
         --! Stream valid data
-        iStreamValidData : in std_logic_vector(gStreamDataWidth-1 downto 0);
+        iStreamValidData    : in std_logic_vector(gStreamDataWidth-1 downto 0);
         -- Bus interface
         --! Bus address
-        oBusAddress : out std_logic_vector(gBusAddrWidth-1 downto 0);
+        oBusAddress         : out std_logic_vector(gBusAddrWidth-1 downto 0);
         --! Bus write
-        oBusWrite : out std_logic;
+        oBusWrite           : out std_logic;
         --! Bus write data
-        oBusWritedata : out std_logic_vector(gBusDataWidth-1 downto 0);
+        oBusWritedata       : out std_logic_vector(gBusDataWidth-1 downto 0);
         --! Bus read
-        oBusRead : out std_logic;
+        oBusRead            : out std_logic;
         --! Bus read data
-        iBusReaddata : in std_logic_vector(gBusDataWidth-1 downto 0);
+        iBusReaddata        : in std_logic_vector(gBusDataWidth-1 downto 0);
         --! Bus waitrequest
-        iBusWaitrequest : in std_logic
+        iBusWaitrequest     : in std_logic
     );
 end protStream;
 
@@ -105,35 +107,35 @@ architecture rtl of protStream is
 
     --! Register type
     type tReg is record
-        addr : std_logic_vector(gBusAddrWidth-1 downto 0);
-        buf : std_logic_vector(gBusDataWidth-1 downto 0);
-        level : natural;
-        nDone : std_logic;
+        addr    : std_logic_vector(gBusAddrWidth-1 downto 0);
+        buf     : std_logic_vector(gBusDataWidth-1 downto 0);
+        level   : natural;
+        nDone   : std_logic;
     end record;
 
     --! address increment
-    constant cRegAddr_incr : natural := gBusDataWidth/cByte;
+    constant cRegAddr_incr      : natural := gBusDataWidth/cByte;
     --! level empty
-    constant cRegLevel_empty : natural := 0;
+    constant cRegLevel_empty    : natural := 0;
     --! level full
-    constant cRegLevel_full : natural := gBusDataWidth/gStreamDataWidth;
+    constant cRegLevel_full     : natural := gBusDataWidth/gStreamDataWidth;
 
     --! Register initialize
     constant cRegInit : tReg := (
-        addr => (others => cInactivated),
-        buf => (others => cInactivated),
-        level => 0,
-        nDone => cnActivated
+        addr    => (others => cInactivated),
+        buf     => (others => cInactivated),
+        level   => 0,
+        nDone   => cnActivated
     );
 
     --! Function to increment address register by access width (cRegAddr_incr)
     function incrAddr (din : tReg) return std_logic_vector is
-        variable vVal : unsigned(din.addr'range);
-        variable vIncr : unsigned(din.addr'range);
+        variable vVal   : unsigned(din.addr'range);
+        variable vIncr  : unsigned(din.addr'range);
     begin
-        vVal := unsigned(din.addr);
-        vIncr := to_unsigned(cRegAddr_incr, vIncr'length);
-        vVal := vVal + vIncr;
+        vVal    := unsigned(din.addr);
+        vIncr   := to_unsigned(cRegAddr_incr, vIncr'length);
+        vVal    := vVal + vIncr;
 
         return std_logic_vector(vVal);
     end function;
@@ -150,54 +152,67 @@ architecture rtl of protStream is
     constant cFsmRst : tFsm := sIdle;
 
     --! Write register set
-    signal wrReg : tReg;
+    signal wrReg            : tReg;
     --! Write register set next
-    signal wrReg_next : tReg;
+    signal wrReg_next       : tReg;
     --! Write register start address
-    constant cWrStartAddr : std_logic_vector(wrReg.addr'range) :=
+    constant cWrStartAddr   : std_logic_vector(wrReg.addr'range) :=
         std_logic_vector(to_unsigned(gWrBufBase, wrReg.addr'length));
     --! Write high address
-    constant cWrHighAddr : std_logic_vector(wrReg.addr'range) :=
+    constant cWrHighAddr    : std_logic_vector(wrReg.addr'range) :=
         std_logic_vector(to_unsigned(
             (gWrBufBase + gWrBufSize - cRegAddr_incr),
         wrReg.addr'length));
     --! Read register set
-    signal rdReg : tReg;
+    signal rdReg            : tReg;
     --! Read register set next
-    signal rdReg_next : tReg;
+    signal rdReg_next       : tReg;
     --! Read register start address
-    constant cRdStartAddr : std_logic_vector(rdReg.addr'range) :=
+    constant cRdStartAddr   : std_logic_vector(rdReg.addr'range) :=
         std_logic_vector(to_unsigned(gRdBufBase, rdReg.addr'length));
     --! Read high address
-    constant cRdHighAddr : std_logic_vector(rdReg.addr'range) :=
+    constant cRdHighAddr    : std_logic_vector(rdReg.addr'range) :=
         std_logic_vector(to_unsigned(
             (gRdBufBase + gRdBufSize - cRegAddr_incr),
         rdReg.addr'length));
 
     --! State machine
-    signal fsm : tFsm;
+    signal fsm      : tFsm;
     --! State machine next
     signal fsm_next : tFsm;
 
     --! First load saver
-    signal firstLoad : std_logic;
+    signal firstLoad        : std_logic;
     --! First load next
-    signal firstLoad_next : std_logic;
+    signal firstLoad_next   : std_logic;
 
     --! Load
-    signal load : std_logic;
+    signal load         : std_logic;
     --! Load next
-    signal load_next : std_logic;
+    signal load_next    : std_logic;
 
+    --! Skip counter value for skip loads
+    constant cSkipLoads         : natural := gStreamSkipLoads;
+    --! Skip counter value for skip valids
+    constant cSkipValids        : natural := gStreamSkipValids;
+    --! Maximum skip counter value
+    constant cStreamSkipMax     : natural := MAX(cSkipLoads, cSkipValids);
     --! Skip counter
-    signal skipCnt          : std_logic_vector(logDualis(gStreamSkipNum) downto 0);
+    signal skipCnt              : std_logic_vector(logDualis(cStreamSkipMax) downto 0);
     --! Skip counter next
-    signal skipCnt_next     : std_logic_vector(logDualis(gStreamSkipNum) downto 0);
+    signal skipCnt_next         : std_logic_vector(logDualis(cStreamSkipMax) downto 0);
+    --! Skip counter load done
+    signal skipCnt_LoadsDone    : std_logic;
+    --! Skip counter valid done
+    signal skipCnt_ValidsDone   : std_logic;
     --! Skip counter done
-    signal skipCnt_done     : std_logic;
-    --! Skip count value
-    constant cStreamSkipNum : std_logic_vector :=
-            std_logic_vector(to_unsigned(gStreamSkipNum, skipCnt'length));
+    signal skipCnt_done         : std_logic;
+    --! Skip count value loads
+    constant cStreamSkipLoads   : std_logic_vector :=
+            std_logic_vector(to_unsigned(cSkipLoads, skipCnt'length));
+    --! Skip count value valids
+    constant cStreamSkipValids  : std_logic_vector :=
+            std_logic_vector(to_unsigned(cSkipValids, skipCnt'length));
 begin
     -- check generic
     assert (gBusDataWidth >= gStreamDataWidth)
@@ -205,37 +220,42 @@ begin
     severity failure;
 
     -- assign outputs
-    oBusAddress <=  wrReg.addr when fsm = sBusWr else
-                    rdReg.addr;
-    oBusWrite <=    cActivated when fsm = sBusWr else
-                    cInactivated;
-    oBusRead <=     cActivated when fsm = sBusRd else
-                    cInactivated;
-    oBusWritedata <= wrReg.buf;
-    oStreamLoad <= load;
+    oBusAddress     <=  wrReg.addr when fsm = sBusWr else
+                        rdReg.addr;
+    oBusWrite       <=  cActivated when fsm = sBusWr else
+                        cInactivated;
+    oBusRead        <=  cActivated when fsm = sBusRd else
+                        cInactivated;
+    oBusWritedata   <=  wrReg.buf;
+    oStreamLoad     <=  load;
 
     --! The register process assigns the next signals.
     regProc : process(iArst, iClk)
     begin
         if iArst = cActivated then
-            wrReg <= cRegInit;
-            rdReg <= cRegInit;
-            fsm <= cFsmRst;
-            firstLoad <= cInactivated;
-            load <= cInactivated;
+            wrReg       <= cRegInit;
+            rdReg       <= cRegInit;
+            fsm         <= cFsmRst;
+            firstLoad   <= cInactivated;
+            load        <= cInactivated;
             skipCnt     <= (others => cInactivated);
         elsif rising_edge(iClk) then
-            wrReg <= wrReg_next;
-            rdReg <= rdReg_next;
-            fsm <= fsm_next;
-            firstLoad <= firstLoad_next;
-            load <= load_next;
+            wrReg       <= wrReg_next;
+            rdReg       <= rdReg_next;
+            fsm         <= fsm_next;
+            firstLoad   <= firstLoad_next;
+            load        <= load_next;
             skipCnt     <= skipCnt_next;
         end if;
     end process;
 
-    skipCnt_done <= cActivated when skipCnt = cStreamSkipNum else
-                    cInactivated;
+    skipCnt_LoadsDone   <=  cActivated when skipCnt >= cStreamSkipLoads else
+                            cInactivated;
+
+    skipCnt_ValidsDone  <=  cActivated when skipCnt > cStreamSkipValids else
+                            cInactivated;
+
+    skipCnt_done <= skipCnt_LoadsDone and skipCnt_ValidsDone;
 
     --! The combinational process assigns the next signals.
     comb : process (
@@ -247,6 +267,8 @@ begin
         load,
         skipCnt,
         skipCnt_done,
+        skipCnt_LoadsDone,
+        skipCnt_ValidsDone,
         iStreamValid,
         iStreamValidData,
         iBusWaitrequest,
@@ -255,31 +277,36 @@ begin
         variable vTmp : natural;
     begin
         -- default
-        wrReg_next <= wrReg;
-        rdReg_next <= rdReg;
-        fsm_next <= fsm;
-        firstLoad_next <= firstLoad;
-        load_next <= cInactivated;
-        skipCnt_next    <= skipCnt;
+        wrReg_next      <= wrReg;
+        rdReg_next      <= rdReg;
+        fsm_next        <= fsm;
+        firstLoad_next  <= firstLoad;
+        load_next       <= cInactivated;
         oStreamLoadData <= (others => cInactivated);
+        skipCnt_next    <= skipCnt;
 
         -- protocol synchronous reset
         if iSrst = cActivated then
             -- register initials
-            wrReg_next <= cRegInit;
-            rdReg_next <= cRegInit;
-            fsm_next <= sIdle;
+            wrReg_next  <= cRegInit;
+            rdReg_next  <= cRegInit;
+            fsm_next    <= sIdle;
 
             -- prepare for first load
-            firstLoad_next <= cActivated;
-            wrReg_next.addr <= cWrStartAddr;
-            wrReg_next.nDone <= cnInactivated;
-            rdReg_next.addr <= cRdStartAddr;
-            rdReg_next.nDone <= cnInactivated;
+            firstLoad_next      <= cActivated;
+            wrReg_next.addr     <= cWrStartAddr;
+            wrReg_next.nDone    <= cnInactivated;
+            rdReg_next.addr     <= cRdStartAddr;
+            rdReg_next.nDone    <= cnInactivated;
 
             -- initialize skip counter to zero
             skipCnt_next    <= (others => cInactivated);
         else
+            -- handle skip counter after loading
+            if skipCnt_done = cInactivated and load = cActivated then
+                skipCnt_next <= std_logic_vector(unsigned(skipCnt) + 1);
+            end if;
+
             -- load data after valid data
             if rdReg.nDone = cnInactivated then
                 load_next <= iStreamValid;
@@ -292,17 +319,13 @@ begin
 
             -- incr/decr levels
             if iStreamValid = cActivated and wrReg.nDone = cnInactivated then
-                if skipCnt_done = cActivated then
+                if skipCnt_ValidsDone = cActivated then
                     wrReg_next.level <= wrReg.level + 1;
-                else
-                    skipCnt_next <= std_logic_vector(unsigned(skipCnt) + 1);
                 end if;
             end if;
             if load = cActivated and rdReg.nDone = cnInactivated then
-                if skipCnt_done = cActivated then
+                if skipCnt_LoadsDone = cActivated then
                     rdReg_next.level <= rdReg.level - 1;
-                else
-                    -- skipCnt handled with valids
                 end if;
             end if;
 

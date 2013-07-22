@@ -49,128 +49,135 @@ entity spiBridge is
     generic (
         -- SPI slave settings
         --! SPI register size (= frame size)
-        gRegisterSize : natural := 8;
+        gRegisterSize   : natural := 8;
         --! SPI clock polarity (allowed values 0 and 1)
-        gPolarity : natural := 0;
+        gPolarity       : natural := 0;
         --! SPI clock phase (allowed values 0 and 1)
-        gPhase : natural := 0;
+        gPhase          : natural := 0;
         --! Shift direction (0 = LSB first, otherwise = MSB first)
-        gShiftDir : natural := 0;
+        gShiftDir       : natural := 0;
         -- Bus master settings
         --! Bus interface data width
-        gBusDataWidth : natural := 32;
+        gBusDataWidth   : natural := 32;
         --! Bus interface address width
-        gBusAddrWidth : natural := 8;
+        gBusAddrWidth   : natural := 8;
         --! Write buffer base
-        gWrBufBase : natural := 16#00#;
+        gWrBufBase      : natural := 16#00#;
         --! Write buffer size
-        gWrBufSize : natural := 128;
+        gWrBufSize      : natural := 128;
         --! Read buffer base
-        gRdBufBase : natural := 16#80#;
+        gRdBufBase      : natural := 16#80#;
         --! Read buffer size
-        gRdBufSize : natural := 128
+        gRdBufSize      : natural := 128
     );
     port (
         --! Asynchronous reset
-        iArst : in std_logic;
+        iArst           : in std_logic;
         --! Clock
-        iClk : in std_logic;
+        iClk            : in std_logic;
         -- SPI
         --! SPI clock
-        iSpiClk : in std_logic;
+        iSpiClk         : in std_logic;
         --! SPI select (low-active)
-        inSpiSel : in std_logic;
+        inSpiSel        : in std_logic;
         --! SPI master-out-slave-in
-        iSpiMosi : in std_logic;
+        iSpiMosi        : in std_logic;
         --! SPI master-in-slave-out
-        oSpiMiso : out std_logic;
+        oSpiMiso        : out std_logic;
         --! SPI master-in-slave-out buffer enable
-        oSpiMiso_t : out std_logic;
+        oSpiMiso_t      : out std_logic;
         -- Bus master
         --! Bus address
-        oBusAddress : out std_logic_vector(gBusAddrWidth-1 downto 0);
+        oBusAddress     : out std_logic_vector(gBusAddrWidth-1 downto 0);
         --! Bus write
-        oBusWrite : out std_logic;
+        oBusWrite       : out std_logic;
         --! Bus write data
-        oBusWritedata : out std_logic_vector(gBusDataWidth-1 downto 0);
+        oBusWritedata   : out std_logic_vector(gBusDataWidth-1 downto 0);
         --! Bus read
-        oBusRead : out std_logic;
+        oBusRead        : out std_logic;
         --! Bus read data
-        iBusReaddata : in std_logic_vector(gBusDataWidth-1 downto 0);
+        iBusReaddata    : in std_logic_vector(gBusDataWidth-1 downto 0);
         --! Bus waitrequest
         iBusWaitrequest : in std_logic;
         --! Synchronous protocol reset
-        iSrst : in std_logic
+        iSrst           : in std_logic
     );
 end spiBridge;
 
 architecture rtl of spiBridge is
+    --! Number of first load skips
+    constant cStreamSkipLoads    : natural := 3;
+    --! Number of first valid skips
+    constant cStreamSkipValids   : natural := 4;
+
     --! Load spi core
-    signal load : std_logic;
+    signal load         : std_logic;
     --! Data to be loaded to spi core
-    signal loadData : std_logic_vector(gRegisterSize-1 downto 0);
+    signal loadData     : std_logic_vector(gRegisterSize-1 downto 0);
     --! Valid data by spi core
-    signal valid : std_logic;
+    signal valid        : std_logic;
     --! Valid data provided by spi core
-    signal validData : std_logic_vector(gRegisterSize-1 downto 0);
+    signal validData    : std_logic_vector(gRegisterSize-1 downto 0);
 
     --! Rising edge of synchronous protocol reset
     signal srst_rising : std_logic;
 begin
     theProtCore : entity work.protStream
         generic map (
-            gStreamDataWidth => gRegisterSize,
-            gBusDataWidth => gBusDataWidth,
-            gBusAddrWidth => gBusAddrWidth,
-            gWrBufBase => gWrBufBase,
-            gWrBufSize => gWrBufSize,
-            gRdBufBase => gRdBufBase
+            gStreamDataWidth    => gRegisterSize,
+            gStreamSkipLoads    => cStreamSkipLoads,
+            gStreamSkipValids   => cStreamSkipValids,
+            gBusDataWidth       => gBusDataWidth,
+            gBusAddrWidth       => gBusAddrWidth,
+            gWrBufBase          => gWrBufBase,
+            gWrBufSize          => gWrBufSize,
+            gRdBufBase          => gRdBufBase
         )
         port map (
-            iArst => iArst,
-            iClk => iClk,
-            iSrst => srst_rising,
-            oStreamLoad => load,
-            oStreamLoadData => loadData,
-            iStreamValid => valid,
-            iStreamValidData => validData,
-            oBusAddress => oBusAddress,
-            oBusWrite => oBusWrite,
-            oBusWritedata => oBusWritedata,
-            oBusRead => oBusRead,
-            iBusReaddata => iBusReaddata,
-            iBusWaitrequest => iBusWaitrequest
+            iArst               => iArst,
+            iClk                => iClk,
+            iSrst               => srst_rising,
+            oStreamLoad         => load,
+            oStreamLoadData     => loadData,
+            iStreamValid        => valid,
+            iStreamValidData    => validData,
+            oBusAddress         => oBusAddress,
+            oBusWrite           => oBusWrite,
+            oBusWritedata       => oBusWritedata,
+            oBusRead            => oBusRead,
+            iBusReaddata        => iBusReaddata,
+            iBusWaitrequest     => iBusWaitrequest
         );
 
     theSpiCore : entity work.spiSlave
         generic map (
-            gRegisterSize => gRegisterSize,
-            gPolarity => gPolarity,
-            gPhase => gPhase,
-            gShiftDir => gShiftDir
+            gRegisterSize   => gRegisterSize,
+            gPolarity       => gPolarity,
+            gPhase          => gPhase,
+            gShiftDir       => gShiftDir
         )
         port map (
-            iArst => iArst,
-            iClk => iClk,
-            iSpiClk => iSpiClk,
-            inSpiSel => inSpiSel,
-            iSpiMosi => iSpiMosi,
-            oSpiMiso => oSpiMiso,
-            oSpiMiso_t => oSpiMiso_t,
-            iLoadData => loadData,
-            iLoad => load,
-            oReadData => validData,
-            oValid => valid
+            iArst       => iArst,
+            iClk        => iClk,
+            iSpiClk     => iSpiClk,
+            inSpiSel    => inSpiSel,
+            iSpiMosi    => iSpiMosi,
+            oSpiMiso    => oSpiMiso,
+            oSpiMiso_t  => oSpiMiso_t,
+            iLoadData   => loadData,
+            iLoad       => load,
+            oReadData   => validData,
+            oValid      => valid
         );
 
     theSyncEdgeDet : entity work.edgedetector
         port map (
-            iArst => iArst,
-            iClk => iClk,
-            iEnable => cActivated,
-            iData => iSrst,
-            oRising => srst_rising,
-            oFalling => open,
-            oAny => open
+            iArst       => iArst,
+            iClk        => iClk,
+            iEnable     => cActivated,
+            iData       => iSrst,
+            oRising     => srst_rising,
+            oFalling    => open,
+            oAny        => open
         );
 end rtl;
