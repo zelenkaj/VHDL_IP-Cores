@@ -1,5 +1,5 @@
 view wave
-add wave /* -r
+add wave -r *
 set broken 0
 onbreak {
     set broken 1
