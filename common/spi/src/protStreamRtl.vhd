@@ -316,7 +316,7 @@ begin
             -- Assign read buffer to load stream data.
             -- The offset is determined by the fill level!
             if load = cActivated then
-                vTmp := rdReg.level - 1;
+                vTmp := cRegLevel_full - rdReg.level;
                 oStreamLoadData <= rdReg.buf((vTmp+1)*gStreamDataWidth-1 downto vTmp*gStreamDataWidth);
             end if;
 

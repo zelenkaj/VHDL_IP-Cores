@@ -230,10 +230,10 @@ begin
     end process;
 
     checkBus : process(rst, clk)
-        variable vPattern       : natural;
-        variable vPattern_ref   : natural;
-        variable vAddr          : natural;
-        variable vAddr_ref      : natural;
+        variable vPattern           : natural;
+        variable vPattern_ref       : natural;
+        variable vAddr              : natural;
+        variable vAddr_ref          : natural;
     begin
         if rst = cActivated then
         elsif rising_edge(clk) then
@@ -247,7 +247,7 @@ begin
                             " shall = " & integer'image(vPattern_ref) &
                             " | " &
                             " is = " & integer'image(vPattern) &
-                            ")"
+                            " )"
                     severity failure;
                 end loop;
             end if;
@@ -262,7 +262,7 @@ begin
                             " shall = " & integer'image(vAddr_ref) &
                             " | " &
                             " is = " & integer'image(vAddr) &
-                            ")"
+                            " )"
                     severity failure;
                 elsif read = cActivated then
                     vAddr_ref := busRead_cnt * gBusDataWidth/cByte + cRdBufBase;
@@ -271,7 +271,7 @@ begin
                             " shall = " & integer'image(vAddr_ref) &
                             " | " &
                             " is = " & integer'image(vAddr) &
-                            ")"
+                            " )"
                     severity failure;
                 end if;
             end if;
@@ -279,10 +279,10 @@ begin
     end process;
 
     checkStream : process(rst, clk)
-        variable vLoadData : natural;
-        variable vBusRead : natural;
-        variable vReaddata : std_logic_vector(readdata'range);
-        variable vSkipCnt   : natural;
+        variable vLoadData      : natural;
+        variable vBusRead       : natural;
+        variable vReaddata      : std_logic_vector(readdata'range);
+        variable vSkipCnt       : natural;
     begin
         if rst = cActivated then
         elsif rising_edge(clk) then
@@ -295,6 +295,17 @@ begin
                 else
                     vLoadData := to_integer(unsigned(loadData));
                     vReaddata := std_logic_vector(unsigned(readdata) - 1);
+
+                    --swapping if necessary
+                    case gStreamDataWidth is
+                        when cWordLength =>
+                            vReaddata := wordSwap(vReaddata);
+                        when cByteLength =>
+                            vReaddata := byteSwap(vReaddata);
+                        when others =>
+                            NULL;
+                    end case;
+
                     for i in gBusDataWidth/gStreamDataWidth-1 downto 0 loop
                         if i = streamLoad_cnt then
                             vBusRead := to_integer(unsigned(vReaddata((i+1)*gStreamDataWidth-1 downto i*gStreamDataWidth)));
@@ -303,7 +314,7 @@ begin
                                 " shall = " & integer'image(vBusRead) &
                                 " | " &
                                 " is = " & integer'image(vLoadData) &
-                                ")"
+                                " )"
                             severity failure;
                         end if;
                     end loop;
