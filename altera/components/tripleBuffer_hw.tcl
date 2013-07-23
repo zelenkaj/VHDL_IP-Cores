@@ -185,6 +185,22 @@ proc elaboration_callback {} {
     # Get total number of buffer (=gInputBuffers)
     set num [llength $bufSize]
 
+    # Get total size of consumer (+ ack reg)
+    set sizeCon $ackRegSize
+    foreach sz $bufSizeCon {
+        set sizeCon [expr $sizeCon + $sz]
+    }
+
+    # Get total size of producer (+ ack reg)
+    set sizePro $ackRegSize
+    foreach sz $bufSizePro {
+        set sizePro [expr $sizePro + $sz]
+    }
+
+    if { $portAstream != 0 } {
+        send_message info "porta -> Read size = $sizeCon | Write size = $sizePro"
+    }
+
     # -------------------------------------------------------------------------
     # Get Input Memory Map
 
