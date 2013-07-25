@@ -10,8 +10,8 @@ proc generationCallback { instName tgtDir bspDir } {
     set listCmacro_siz  [list   "TBUF_SIZE_CONACK" \
                                 "TBUF_SIZE" \
                                 "TBUF_SIZE_PROACK" ]
-    set listCmacro_oth  [list   "TBUF_NUM_CON" "TBUF_NUM_PRO" \
-                                "TBUF_PORTA_ISPRODUCER"]
+    set cmacro_ispro            "TBUF_PORTA_ISPRODUCER"
+    set listCmacro_oth  [list   "TBUF_NUM_CON" "TBUF_NUM_PRO" ]
 
     # Get path of this file
     set thisFileLoc [pwd]
@@ -52,6 +52,21 @@ proc generationCallback { instName tgtDir bspDir } {
     # Get all size values
     set listCmacroValue_siz [getCmacroValues $listCmacroName_siz]
 
+    # Get is-producer cmacros
+    set listCmacroName_ispro [getAllCmacros $cmacro_ispro]
+
+    # Get is-producer values
+    set listCmacroValue_ispro [getCmacroValues $listCmacroName_ispro]
+
+    # Add con- and pro-ack ispro for vector
+    set listCmacroName_ispro [concat    "${cmacro_ispro}_CONACK" \
+                                        ${listCmacroName_ispro} \
+                                        "${cmacro_ispro}_PROACK"]
+    set ackVal_ispro -1
+    set listCmacroValue_ispro [concat   "${ackVal_ispro}" \
+                                        ${listCmacroValue_ispro} \
+                                        "${ackVal_ispro}"]
+
     # Open file in target directory
     set fid [writeFile_open "${tgtDir}/${fileName}"]
 
@@ -64,11 +79,13 @@ proc generationCallback { instName tgtDir bspDir } {
     writeFile_string $fid "#define __APPIF_CFG_H__"
     writeFile_emptyLine $fid
 
-    # Write offset/size pairs
+    # Write offset/size/is-pro pairs
     foreach off_name $listCmacroName_off off_val $listCmacroValue_off \
-            siz_name $listCmacroName_siz size_val $listCmacroValue_siz {
+            siz_name $listCmacroName_siz size_val $listCmacroValue_siz \
+            ispro_name $listCmacroName_ispro ispro_val $listCmacroValue_ispro {
         writeFile_cmacro $fid $off_name $off_val
         writeFile_cmacro $fid $siz_name $size_val
+        writeFile_cmacro $fid $ispro_name $ispro_val
         writeFile_emptyLine $fid
     }
 
@@ -85,9 +102,10 @@ proc generationCallback { instName tgtDir bspDir } {
     set numOfBuf [llength $listCmacroName_off]
 
     set cnt 0
-    foreach off_name $listCmacroName_off siz_name $listCmacroName_siz {
+    foreach off_name $listCmacroName_off siz_name $listCmacroName_siz \
+            ispro_name $listCmacroName_ispro {
         set tmpString "                        "
-        set tmpString "${tmpString}{ ${off_name}, ${siz_name} }"
+        set tmpString "${tmpString}{ ${off_name}, ${siz_name}, ${ispro_name} }"
 
         incr cnt
 
