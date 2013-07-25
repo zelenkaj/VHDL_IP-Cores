@@ -50,6 +50,7 @@ set_module_property TOP_LEVEL_HDL_FILE "../../altera/tripleBuffer/src/alteraTrip
 set_module_property TOP_LEVEL_HDL_MODULE alteraTripleBuffer
 set_module_property INSTANTIATE_IN_SYSTEM_MODULE true
 set_module_property EDITABLE false
+set_module_property VALIDATION_CALLBACK validation_callback
 set_module_property ELABORATION_CALLBACK elaboration_callback
 set_module_property ANALYZE_HDL false
 
@@ -123,15 +124,55 @@ set_parameter_property  gPortAstream    VISIBLE             false
 # -----------------------------------------------------------------------------
 # GUI parameters
 # -----------------------------------------------------------------------------
-add_parameter           gui_listSizeCon     INTEGER_LIST
-set_parameter_property  gui_listSizeCon     DEFAULT_VALUE   12,16,32,36,36
-set_parameter_property  gui_listSizeCon     DISPLAY_NAME    "Consumer Buffer Size"
-set_parameter_property  gui_listSizeCon     UNITS           "Bytes"
+set CON_PARAM       conBufSize
+set CON_MAX_BUF     32
+set CON_BUF_NAME    "Consumer Buffer Size"
+set CON_BUF_UNIT    "Bytes"
 
-add_parameter           gui_listSizePro     INTEGER_LIST
-set_parameter_property  gui_listSizePro     DEFAULT_VALUE   16,32,36,36
-set_parameter_property  gui_listSizePro     DISPLAY_NAME    "Producer Buffer Size"
-set_parameter_property  gui_listSizePro     UNITS           "Bytes"
+set PRO_PARAM       proBufSize
+set PRO_MAX_BUF     32
+set PRO_BUF_NAME    "Producer Buffer Size"
+set PRO_BUF_UNIT    "Bytes"
+
+# Generate Consumer buffer size parameters
+add_display_item "" "Consumer Buffers" GROUP
+
+add_parameter           numOfCon    NATURAL         4
+set_parameter_property  numOfCon    DISPLAY_NAME    "Number of Consumer Buffers"
+set_parameter_property  numOfCon    ALLOWED_RANGES  {0:32}
+
+add_display_item "Consumer Buffers" "numOfCon" PARAMETER
+
+set glb_listCon     ""
+for {set i 0} {$i < ${CON_MAX_BUF}} {incr i} {
+    add_parameter           ${CON_PARAM}${i} NATURAL        0
+    set_parameter_property  ${CON_PARAM}${i} DISPLAY_NAME   "${CON_BUF_NAME} ${i}"
+    set_parameter_property  ${CON_PARAM}${i} UNITS          ${CON_BUF_UNIT}
+
+    add_display_item "Consumer Buffers" "${CON_PARAM}${i}" PARAMETER
+
+    set glb_listCon [concat $glb_listCon ${CON_PARAM}${i}]
+}
+
+# Generate Producer buffer size parameters
+add_display_item "" "Producer Buffers" GROUP
+
+add_parameter           numOfPro    NATURAL         4
+set_parameter_property  numOfPro    DISPLAY_NAME    "Number of Producer Buffers"
+set_parameter_property  numOfPro    ALLOWED_RANGES  {0:32}
+
+add_display_item "Producer Buffers" "numOfPro" PARAMETER
+
+set glb_listPro     ""
+for {set i 0} {$i < ${PRO_MAX_BUF}} {incr i} {
+    add_parameter           ${PRO_PARAM}${i} NATURAL        0
+    set_parameter_property  ${PRO_PARAM}${i} DISPLAY_NAME   "${PRO_BUF_NAME} ${i}"
+    set_parameter_property  ${PRO_PARAM}${i} UNITS          ${PRO_BUF_UNIT}
+
+    add_display_item "Producer Buffers" "${PRO_PARAM}${i}" PARAMETER
+
+    set glb_listPro [concat $glb_listPro ${PRO_PARAM}${i}]
+}
 
 add_parameter           gui_enableStream    BOOLEAN
 set_parameter_property  gui_enableStream    DEFAULT_VALUE   false
@@ -140,18 +181,21 @@ set_parameter_property  gui_enableStream    DISPLAY_NAME    "Stream Access at Po
 # -----------------------------------------------------------------------------
 # GUI configuration
 # -----------------------------------------------------------------------------
-add_display_item        "" tableCon                         GROUP TABLE
-add_display_item        tableCon gui_listSizeCon            PARAMETER
-
-add_display_item        "" tablePro                         GROUP TABLE
-add_display_item        tablePro gui_listSizePro            PARAMETER
 
 # -----------------------------------------------------------------------------
 # callbacks
 # -----------------------------------------------------------------------------
+proc validation_callback {} {
+    setGuiParamListVis $::glb_listCon "numOfCon"
+    setGuiParamListVis $::glb_listPro "numOfPro"
+}
+
 proc elaboration_callback {} {
     # -------------------------------------------------------------------------
     # predefined values
+
+    # Alignment [byte]
+    set alignment   4
 
     # Consumer ack base address
     set ackRegSize  4
@@ -169,11 +213,29 @@ proc elaboration_callback {} {
     }
 
     # -------------------------------------------------------------------------
-    # Process GUI tables
+    # Process GUI parameters
 
     # Get table values as lists
-    set bufSizeCon [procBufferSize gui_listSizeCon]
-    set bufSizePro [procBufferSize gui_listSizePro]
+    set bufSizeCon [getGuiParamListVal $::glb_listCon "numOfCon"]
+    set bufSizePro [getGuiParamListVal $::glb_listPro "numOfPro"]
+
+    # check buffer sizes for unequal zero
+    if {[checkSizeUnequal $bufSizeCon 0] != 0} {
+        send_message error "Set enabled Consumer buffer sizes unequal zero!"
+    }
+
+    if {[checkSizeUnequal $bufSizePro 0] != 0} {
+        send_message error "Set enabled Producer buffer sizes unequal zero!"
+    }
+
+    # check buffer sizes for alignment
+    if {[checkSizeAlign $bufSizeCon $alignment] != 0} {
+        send_message error "Alignment error with size Consumer buffers."
+    }
+
+    if {[checkSizeAlign $bufSizePro $alignment] != 0} {
+        send_message error "Alignment error with size Producer buffers."
+    }
 
     # Get number of consumer and producer buffers
     set numCon [llength $bufSizeCon]
@@ -240,6 +302,12 @@ proc elaboration_callback {} {
     # Get Triple Buffer Memory Map span
     set triMemSpan   [lindex $triMem end]
 
+    # Check if there is some memory to be generated
+    if { $triMemSpan == 0 } {
+        send_message error "Set triple buffer memory size!"
+        return;
+    }
+
     # Get log2 of memory span
     set log2triMemSpan [expr int(ceil(log($triMemSpan)/log(2)))]
 
@@ -296,24 +364,52 @@ proc elaboration_callback {} {
 # -----------------------------------------------------------------------------
 # internal functions
 # -----------------------------------------------------------------------------
-# Process buffer sizes out of GUI tables
-proc procBufferSize { tab } {
-    # get buffer size list
-    set lst         [split [get_parameter_value $tab] ","]
-    set alignment   4
+# Sets the given parameters' visibility to true/false determined by
+# the parameter value maxname.
+proc setGuiParamListVis { lstname maxname } {
+    set cnt 0
+    set maxcnt [get_parameter_value $maxname]
 
-    # check buffer sizes for alignment
-    if {[checkSizeAlign $lst $alignment] != 0} {
-        send_message error "Alignment error in Table \"[get_parameter_property $tab DISPLAY_NAME]\""
+    foreach param $lstname {
+        if { $cnt < $maxcnt } {
+            set_parameter_property $param VISIBLE true
+        } else {
+            set_parameter_property $param VISIBLE false
+        }
+        incr cnt
+    }
+}
+
+# Get the given parameters' value by the parameter value maxname.
+proc getGuiParamListVal { lstname maxname } {
+    set cnt 0
+    set listRet ""
+    set maxcnt [get_parameter_value $maxname]
+
+    foreach param $lstname {
+        if { $cnt < $maxcnt } {
+            set listRet [concat $listRet [get_parameter_value $param]]
+        }
+        incr cnt
     }
 
-    return $lst
+    return $listRet
 }
 
 # Check size list for alignment
 proc checkSizeAlign { lst alnm } {
     foreach val $lst {
         if {[expr $val % $alnm] != 0} {
+            return -1
+        }
+    }
+    return 0
+}
+
+# Check list for unequality
+proc checkSizeUnequal { lst uneq } {
+    foreach val $lst {
+        if {$val == $uneq} {
             return -1
         }
     }
