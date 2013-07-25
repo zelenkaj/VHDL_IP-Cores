@@ -51,7 +51,7 @@ set_module_property TOP_LEVEL_HDL_MODULE alteraTripleBuffer
 set_module_property INSTANTIATE_IN_SYSTEM_MODULE true
 set_module_property EDITABLE false
 set_module_property ELABORATION_CALLBACK elaboration_callback
-set_module_property ANALYZE_HDL TRUE
+set_module_property ANALYZE_HDL false
 
 # -----------------------------------------------------------------------------
 # file sets
