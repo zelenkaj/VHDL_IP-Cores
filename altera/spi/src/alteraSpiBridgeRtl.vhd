@@ -99,8 +99,8 @@ entity alteraSpiBridge is
         avm_bridge_readdata : in std_logic_vector(gBusDataWidth-1 downto 0);
         --! Avalon-MM master bridge waitrequest
         avm_bridge_waitrequest : in std_logic;
-        --! Interrupt receiver
-        inr_sync_irq : in std_logic
+        --! Sync irq
+        coe_sync_irq : in std_logic
     );
 end alteraSpiBridge;
 
@@ -112,32 +112,32 @@ architecture rtl of alteraSpiBridge is
 begin
     theSpiBridge : entity work.spiBridge
         generic map (
-            gRegisterSize => gRegisterSize,
-            gPolarity => gPolarity,
-            gPhase => gPhase,
-            gShiftDir => gShiftDir,
-            gBusDataWidth => gBusDataWidth,
-            gBusAddrWidth => gBusAddrWidth,
-            gWrBufBase => gWrBufBase,
-            gWrBufSize => gWrBufSize,
-            gRdBufBase => gRdBufBase,
-            gRdBufSize => gRdBufSize
+            gRegisterSize   => gRegisterSize,
+            gPolarity       => gPolarity,
+            gPhase          => gPhase,
+            gShiftDir       => gShiftDir,
+            gBusDataWidth   => gBusDataWidth,
+            gBusAddrWidth   => gBusAddrWidth,
+            gWrBufBase      => gWrBufBase,
+            gWrBufSize      => gWrBufSize,
+            gRdBufBase      => gRdBufBase,
+            gRdBufSize      => gRdBufSize
         )
         port map (
-            iArst => rsi_r0_reset,
-            iClk => csi_c0_clock,
-            iSpiClk => coe_spi_clk,
-            inSpiSel => coe_spi_sel_n,
-            iSpiMosi => coe_spi_mosi,
-            oSpiMiso => spiMiso,
-            oSpiMiso_t => spiMiso_t,
-            oBusAddress => avm_bridge_address,
-            oBusWrite => avm_bridge_write,
-            oBusWritedata => avm_bridge_writedata,
-            oBusRead => avm_bridge_read,
-            iBusReaddata => avm_bridge_readdata,
+            iArst           => rsi_r0_reset,
+            iClk            => csi_c0_clock,
+            iSpiClk         => coe_spi_clk,
+            inSpiSel        => coe_spi_sel_n,
+            iSpiMosi        => coe_spi_mosi,
+            oSpiMiso        => spiMiso,
+            oSpiMiso_t      => spiMiso_t,
+            oBusAddress     => avm_bridge_address,
+            oBusWrite       => avm_bridge_write,
+            oBusWritedata   => avm_bridge_writedata,
+            oBusRead        => avm_bridge_read,
+            iBusReaddata    => avm_bridge_readdata,
             iBusWaitrequest => avm_bridge_waitrequest,
-            iSrst => inr_sync_irq
+            iSrst           => coe_sync_irq
         );
 
     -- miso output driver

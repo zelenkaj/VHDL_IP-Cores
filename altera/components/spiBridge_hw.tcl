@@ -301,11 +301,7 @@ add_interface_port bridge avm_bridge_readdata readdata Input gbusdatawidth
 add_interface_port bridge avm_bridge_waitrequest waitrequest Input 1
 
 # connection point sync
-add_interface sync interrupt start
-set_interface_property sync associatedAddressablePoint bridge
-set_interface_property sync associatedClock c0
-set_interface_property sync associatedReset r0
-set_interface_property sync irqScheme INDIVIDUAL_REQUESTS
+add_interface sync conduit end
 set_interface_property sync ENABLED true
 
-add_interface_port sync inr_sync_irq irq Input 1
+add_interface_port sync coe_sync_irq export Input 1
