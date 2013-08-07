@@ -58,6 +58,8 @@ entity tripleBuffer is
         gInputBase      : std_logic_vector := x"241404";
         --! Triple buffer mapping
         gTriBufOffset   : std_logic_vector := x"403020201000";
+        --! Size of DPRAM
+        gDprSize        : natural := 123;
         --! Port A configuration (0b0 = consumer and 0b1 = producer)
         gPortAconfig    : std_logic_vector := "10";
         --! Enable Stream access at port A (0 = false, otherwise = true)
@@ -113,7 +115,7 @@ architecture rtl of tripleBuffer is
         convStdLogicVectorToNaturalArray(gTriBufOffset, gInputBuffers*3);
 
     --! Dpr size [byte]
-    constant cDprSizeByte           : natural := cTriBufOffset(cTriBufOffset'left);
+    constant cDprSizeByte           : natural := gDprSize;
     --! Dpr size [words]
     constant cDprSize               : natural := cDprSizeByte/(cDataWidth/8);
     --! Dpr size log2

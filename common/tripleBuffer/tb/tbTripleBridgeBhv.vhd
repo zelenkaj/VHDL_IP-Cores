@@ -54,17 +54,26 @@ architecture bhv of tbTripleBridge is
     signal done             : std_logic;
     signal error            : std_logic := cInactivated;
 
-    constant cInAddrWidth   : natural := 6;
-    constant cOutAddrWidth  : natural := 8;
-    constant cInputBuffers  : natural := 4;
-    constant cInputBase     : tNaturalArray(0 to cInputBuffers) := (
-        16#00#, 16#10#, 16#20#, 16#30#, 16#40#
+    constant cInAddrWidth   : natural := 8;
+    constant cOutAddrWidth  : natural := 10;
+    constant cInputBuffers  : natural := 10;
+    constant cInputBase     : tNaturalArray(0 to cInputBuffers) :=
+    (
+        16#04#, 16#10#, 16#1C#, 16#34#, 16#58#,
+        16#7C#, 16#80#, 16#8C#, 16#A0#, 16#C4#,
+        16#E8#
     );
     constant cTriBufOffset  : tNaturalArray(0 to cInputBuffers*3-1) := (
-        16#00#, 16#10#, 16#20#,
-        16#20#, 16#30#, 16#40#,
-        16#40#, 16#50#, 16#60#,
-        16#60#, 16#70#, 16#80#
+        16#000#, 16#00C#, 16#018#,
+        16#018#, 16#024#, 16#030#,
+        16#030#, 16#048#, 16#060#,
+        16#060#, 16#084#, 16#0A8#,
+        16#0A8#, 16#0CC#, 16#0F0#,
+        16#0F0#, 16#0F4#, 16#0F8#,
+        16#0F8#, 16#104#, 16#110#,
+        16#110#, 16#124#, 16#138#,
+        16#138#, 16#15C#, 16#180#,
+        16#180#, 16#1A4#, 16#1C8#
     );
 
     signal enable           : std_logic;

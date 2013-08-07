@@ -16,7 +16,7 @@ common/tripleBuffer/tb/tbTripleBridgeBhv.vhd"
 TOP_LEVEL=tbTripleBridge
 
 chmod +x $ROOT/common/util/sh/msim-sim.sh
-./$ROOT/common/util/sh/msim-sim.sh $TOP_LEVEL -s $SRC_LIST $PAR
+./$ROOT/common/util/sh/msim-sim.sh $TOP_LEVEL $PAR -s $SRC_LIST
 
 if test $? -ne 0
 then

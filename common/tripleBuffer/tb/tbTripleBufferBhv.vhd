@@ -53,6 +53,8 @@ entity tbTripleBuffer is
         gInputBase      : std_logic_vector := x"241404";
         --! Triple buffer mapping
         gTriBufOffset   : std_logic_vector := x"403020201000";
+        --! Size of DPRAM
+        gDprSize        : natural := 123;
         --! Port A configuration (0b0 = consumer and 0b1 = producer)
         gPortAconfig    : std_logic_vector := "10";
         --! Enable Stream access at port A (0 = false, otherwise = true)
@@ -85,8 +87,18 @@ architecture bhv of tbTripleBuffer is
         ack         : std_logic;
     end record;
 
-    signal portA : tPort;
-    signal portB : tPort;
+    constant cPortInit : tPort := (
+        address     => (others => cInactivated),
+        byteenable  => (others => cInactivated),
+        write       => cInactivated,
+        read        => cInactivated,
+        writedata   => (others => cInactivated),
+        readdata    => (others => cInactivated),
+        ack         => cInactivated
+    );
+
+    signal portA : tPort := cPortInit;
+    signal portB : tPort := cPortInit;
 begin
     --! The DUT
     DUT : entity work.tripleBuffer
@@ -95,6 +107,7 @@ begin
             gInputBuffers   => gInputBuffers,
             gInputBase      => gInputBase,
             gTriBufOffset   => gTriBufOffset,
+            gDprSize        => gDprSize,
             gPortAconfig    => gPortAconfig,
             gPortAstream    => gPortAstream
         )
@@ -184,7 +197,7 @@ begin
 
         portA.write         <= cInactivated;
 
-        for i in 0 to 2**cAddressWidth-1 loop
+        for i in 4 to 2**cAddressWidth-1 loop
             portA.byteenable    <= "1111";
             vByteAddr           := std_logic_vector(to_unsigned(i, cAddressWidth));
             portA.address       <= vByteAddr(cAddressWidth-1 downto 2);

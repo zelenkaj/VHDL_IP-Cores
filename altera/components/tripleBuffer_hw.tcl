@@ -103,6 +103,13 @@ set_parameter_property  gTriBufOffset   DERIVED             true
 set_parameter_property  gTriBufOffset   HDL_PARAMETER       true
 set_parameter_property  gTriBufOffset   VISIBLE             false
 
+add_parameter           gDprSize        NATURAL
+set_parameter_property  gDprSize        DEFAULT_VALUE       0
+set_parameter_property  gDprSize        TYPE                NATURAL
+set_parameter_property  gDprSize        DERIVED             true
+set_parameter_property  gDprSize        HDL_PARAMETER       true
+set_parameter_property  gDprSize        VISIBLE             false
+
 add_parameter           gPortAconfig    STRING
 set_parameter_property  gPortAconfig    DEFAULT_VALUE       "10"
 set_parameter_property  gPortAconfig    TYPE                STRING
@@ -300,7 +307,10 @@ proc elaboration_callback {} {
     set triMem_rev [lsort -integer -decreasing $triMem]
 
     # Get Triple Buffer Memory Map span
-    set triMemSpan   [lindex $triMem end]
+    set triMemSpan 0
+    foreach size $bufSize {
+        set triMemSpan [expr $triMemSpan + $size * 3]
+    }
 
     # Check if there is some memory to be generated
     if { $triMemSpan == 0 } {
@@ -345,6 +355,7 @@ proc elaboration_callback {} {
     set_parameter_value gAddressWidth   $log2inMemSpan
     set_parameter_value gInputBase      $inMemMap_string
     set_parameter_value gTriBufOffset   $triMem_string
+    set_parameter_value gDprSize        $triMemSpan
     set_parameter_value gPortAconfig    $isPro_string
     set_parameter_value gPortAstream    $portAstream
 

@@ -117,6 +117,10 @@ architecture rtl of tripleBridge is
         return vTmpArray;
     end function;
 
+    --! Input address normalizer value
+    constant cInAddrNormalizer  : unsigned(gOutAddrWidth-1 downto 0) :=
+        to_unsigned(gInputBase(gInputBase'right), gOutAddrWidth);
+
     --! LUT values (natural array)
     constant cLutNaturalArray : tNaturalArray := lutInitGen(gTriBufOffset);
 
@@ -144,8 +148,10 @@ begin
     -- output signals
     oBufferSelAny_unreg     <= bufferSelAny;
     oBufferSelNone_unreg    <= not bufferSelAny and iEnable;
-    oAddr                   <= transAddrReg;
-    oAddr_unreg             <= transAddrReg_next;
+    oAddr                   <= transAddrReg when bufferSelAny = cActivated else
+                               (others => cInactivated);
+    oAddr_unreg             <= transAddrReg_next when bufferSelAny = cActivated else
+                               (others => cInactivated);
 
     bufferSelAny            <= OR_REDUCE(bufferSel);
 
@@ -184,9 +190,9 @@ begin
     lutTransOffset  <= std_logic_vector(to_unsigned(lutOut, lutTransOffset'length));
 
     -- Address arithmetic
-    --Add translation offset to input address
-    transAddr       <= resize(unsigned(iAddr), gOutAddrWidth) +
-                              unsigned(lutTransOffset);
+    transAddr <=    resize(unsigned(iAddr), gOutAddrWidth)  -- ( input address
+                    - cInAddrNormalizer                     -- - input base offset
+                    + unsigned(lutTransOffset);             -- + lut )
 
     transAddrReg_next <= std_logic_vector(transAddr);
 

@@ -58,6 +58,8 @@ entity alteraTripleBuffer is
         gInputBase      : string := "041424";
         --! Triple buffer mapping
         gTriBufOffset   : string := "001020203040";
+        --! Size of DPRAM
+        gDprSize        : natural := 123;
         --! Port A configuration (0b0 = consumer and 0b1 = producer)
         gPortAconfig    : string := "2";
         --! Enable Stream access at port A (0 = false, otherwise = true)
@@ -117,6 +119,7 @@ begin
             gInputBuffers   => gInputBuffers,
             gInputBase      => convStringToStdLogicVectorQuad(gInputBase),
             gTriBufOffset   => convStringToStdLogicVectorQuad(gTriBufOffset),
+            gDprSize        => gDprSize,
             gPortAconfig    => convStringToStdLogicVector(gPortAconfig),
             gPortAstream    => gPortAstream
         )
