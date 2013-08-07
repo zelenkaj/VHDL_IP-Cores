@@ -70,17 +70,28 @@ architecture bhv of dpRam is
         signal iWrData : in std_logic_vector;
         signal oRdData : out std_logic_vector
     ) is
+        variable vAddr : natural;
     begin
+        vAddr := to_integer(unsigned(iAddr));
+
+        -- handle too high addresses
+        assert (vAddr < gNumberOfWords)
+        report  "Address exceeds memory (addr=" & integer'image(vAddr) & " | max=" & integer'image(gNumberOfWords) & ")"
+        severity failure;
+
+        if vAddr >= gNumberOfWords then
+            vAddr := 0;
+        end if;
+
         -- read from dpram
-        oRdData <= vRam(to_integer(unsigned(iAddr)));
+        oRdData <= vRam(vAddr);
 
         -- write to dpram
         if iWe = cActivated then
             -- bytewise...
             for i in iBe'range loop
                 if iBe(i) = cActivated then
-                    vRam(to_integer(unsigned(iAddr)))((i+1)*8-1 downto i*8)
-                        := iWrData((i+1)*8-1 downto i*8);
+                    vRam(vAddr)((i+1)*8-1 downto i*8) := iWrData((i+1)*8-1 downto i*8);
                 end if;
             end loop;
         end if;
