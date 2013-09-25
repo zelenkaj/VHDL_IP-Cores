@@ -70,9 +70,8 @@ entity magicBridge is
         --! select wheather DPRAM or registers will be used as memory (false = 0, true /= 0)
         gUseMemBlock            : integer := 1;
         --! base addresses in static address space (note: last-1 = high address)
-        gBaseAddressArray       : tArrayStd32 :=
-        (x"0000_1000" , x"0000_2000" , x"0000_3000")
-        );
+        gBaseAddressArray       : tArrayStd32 := (x"0000_1000" , x"0000_2000" , x"0000_3000")
+    );
     port (
         -- Global
         --! component-wide clock signal
@@ -89,21 +88,19 @@ entity magicBridge is
         --! select strobe
         oBridgeSelectAny    : out   std_logic;
         --! select signals of all address spaces
-        oBridgeSelect       : out   std_logic_vector
-        (gAddressSpaceCount-1 downto 0);
+        oBridgeSelect       : out   std_logic_vector(gAddressSpaceCount-1 downto 0);
         -- BaseSet Memory Mapped Write Bus
         --! BaseSet write strob
         iBaseSetWrite       : in    std_logic;
         --! BaseSet byteenable
         iBaseSetByteenable  : in    std_logic_vector;
         --! BaseSet address bus
-        iBaseSetAddress     : in    std_logic_vector
-        (LogDualis(gAddressSpaceCount)-1 downto 0);
+        iBaseSetAddress     : in    std_logic_vector(LogDualis(gAddressSpaceCount)-1 downto 0);
         --! BaseSet write data bus
         iBaseSetData        : in    std_logic_vector;
         --! BaseSer read data bus
         oBaseSetData        : out   std_logic_vector
-        );
+    );
 end magicBridge;
 
 -------------------------------------------------------------------------------
@@ -122,23 +119,23 @@ architecture Rtl of magicBridge is
     constant cByteenableAllZero : std_logic_vector(iBaseSetByteenable'range) :=
         (others => cInactivated);
 
+    --! convert address array into stream
     constant cBaseAddressArrayStd   : std_logic_vector
         ((gAddressSpaceCount+1)*cArrayStd32ElementSize-1 downto 0) :=
         CONV_STDLOGICVECTOR(gBaseAddressArray, gBaseAddressArray'length);
-        --! convert address array into stream
 
+    --! address decoder select signals one hot coded
     signal addrDecSelOneHot         : std_logic_vector
     (gAddressSpaceCount-1 downto 0);
-    --! address decoder select signals one hot coded
+    --! address decoder select signals binary coded
     signal addrDecSelBinary         : std_logic_vector
     (LogDualis(gAddressSpaceCount)-1 downto 0);
-    --! address decoder select signals binary coded
-    signal lutFileBase              : std_logic_vector(iBridgeAddress'range);
     --! selected static lut file base offset
+    signal lutFileBase              : std_logic_vector(iBridgeAddress'range);
+    --! base address in bridge master environment
     signal addrSpaceOffset          : std_logic_vector(iBridgeAddress'range);
     --! address offset within selected static space
     signal registerFileBase         : std_logic_vector(iBaseSetData'range);
-    --! selected dynamic register file base offset
     signal translateAddress         : std_logic_vector
     (MAX(iBaseSetData'high, oBridgeAddress'high) downto iBridgeAddress'low);
 
@@ -149,65 +146,63 @@ architecture Rtl of magicBridge is
 
 
 begin
-
-    --! export one hot code
+    -- export one hot code
     oBridgeSelect       <= addrDecSelOneHot;
 
-    --! export or'd one hot code
+    -- export or'd one hot code
     oBridgeSelectAny    <= OR_REDUCE(addrDecSelOneHot);
 
     --! Generate Address Decoders
     genAddressDecoder : for i in 0 to gAddressSpaceCount-1 generate
         insAddressDecoder : entity work.addr_decoder
-        generic map(
+        generic map (
             addrWidth_g         => iBridgeAddress'length,
             baseaddr_g          => to_integer(
             unsigned(gBaseAddressArray(i)(iBridgeAddress'range))),
             highaddr_g          => to_integer(
             unsigned(gBaseAddressArray(i+1)(iBridgeAddress'range))-1)
-            )
-        port map(
+        )
+        port map (
             selin               => iBridgeSelect,
             addr                => iBridgeAddress,
             selout              => addrDecSelOneHot(i)
-            );
+        );
     end generate;
 
     --! Convert one hot from address decoder to binary
     insBinaryEncoder : entity work.binaryEncoder
-    generic map(
+    generic map (
         gDataWidth              => gAddressSpaceCount
-        )
-    port map(
+    )
+    port map (
         iOneHot                 => addrDecSelOneHot,
         oBinary                 => addrDecSelBinary
-        );
+    );
 
     --! select static base address in lut file
     insLutFile : entity work.lutFile
-    generic map(
+    generic map (
         gLutCount               => gAddressSpaceCount,
         gLutWidth               => cArrayStd32ElementSize,
         gLutInitValue           => cBaseAddressArrayStd
         (cBaseAddressArrayStd'left downto cArrayStd32ElementSize)
-        --! omit high address of last memory map
-        )
-    port map(
+        -- omit high address of last memory map
+    )
+    port map (
         iAddrRead               => addrDecSelBinary,
         oData                   => lutFileBase
-        );
+    );
 
-    --! calculate address offset within static space
-    addrSpaceOffset <= std_logic_vector(
-    unsigned(iBridgeAddress) - unsigned(lutFileBase));
+    -- calculate address offset within static space
+    addrSpaceOffset <= std_logic_vector(unsigned(iBridgeAddress) - unsigned(lutFileBase));
 
-    REG: if gUseMemBlock = 0 generate
+    REG : if gUseMemBlock = 0 generate
         --! select dynamic base address in register file
         insRegFile : entity work.registerFile
-        generic map(
+        generic map (
             gRegCount           => gAddressSpaceCount
-            )
-        port map(
+        )
+        port map (
             iClk                => iClk,
             iRst                => iRst,
             iWriteA             => iBaseSetWrite,
@@ -220,10 +215,10 @@ begin
             oReaddataA          => oBaseSetData,
             iWritedataB         => iBaseSetData, --! write port B unused
             oReaddataB          => registerFileBase
-            );
+        );
     end generate REG;
 
-    RAM: if gUseMemBlock /= 0 generate
+    RAM : if gUseMemBlock /= 0 generate
 
         DPRAM_ByteenableA(iBaseSetByteenable'range) <= iBaseSetByteenable;
         DPRAM_WritedataA(iBaseSetData'range)        <= iBaseSetData;
@@ -232,12 +227,12 @@ begin
         DPRAM_WritedataB(iBaseSetData'range)        <=  iBaseSetData;
         registerFileBase                            <= DPRAM_ReaddataB(registerFileBase'range);
 
-        insDPRAM: entity work.dpRam
-        generic map(
+        insDPRAM : entity work.dpRam
+        generic map (
             gWordWidth         => cDPRAM_wordwidth,--iBaseSetData'length,
             gNumberOfWords     => gAddressSpaceCount
         )
-        port map(
+        port map (
             iClk_A             => iClk,
             iWriteEnable_A     => iBaseSetWrite,
             iAddress_A         => iBaseSetAddress,
@@ -254,7 +249,7 @@ begin
 
     end generate RAM;
 
-    --! calculate translated address offset in dynamic space
+    -- calculate translated address offset in dynamic space
     oBridgeAddress      <= translateAddress(oBridgeAddress'range);
     translateAddress    <= std_logic_vector(
             unsigned(registerFileBase) + unsigned(addrSpaceOffset) );
