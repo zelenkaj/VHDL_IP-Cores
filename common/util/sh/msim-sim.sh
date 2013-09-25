@@ -75,6 +75,8 @@ cp work $OUT_DIR/work -r
 #copy waves and transcript into
 cp transcript $OUT_DIR -r
 cp *.wlf $OUT_DIR -r
+#set mode of copied files
+chmod u+rw $OUT_DIR/* -R
 
 #exit with simulation return
 exit $RET
