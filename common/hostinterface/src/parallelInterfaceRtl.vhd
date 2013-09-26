@@ -352,52 +352,69 @@ begin
     end generate;
 
     -- synchronize all available control signals
-    syncChipselect : entity work.sync
+    syncChipselect : entity work.synchronizer
+        generic map (
+            gStages => 2,
+            gInit   => cInactivated
+        )
         port map (
-            clk     => iClk,
-            rst     => iRst,
-            din     => iParHostChipselect,
-            dout    => hostChipselect
+            iArst   => iRst,
+            iClk    => iClk,
+            iAsync  => iParHostChipselect,
+            oSync   => hostChipselect
         );
 
-    syncWrite : entity work.sync
+    syncWrite : entity work.synchronizer
+        generic map (
+            gStages => 2,
+            gInit   => cInactivated
+        )
         port map (
-            clk     => iClk,
-            rst     => iRst,
-            din     => iParHostWrite,
-            dout    => hostWrite_noCs
+            iArst   => iRst,
+            iClk    => iClk,
+            iAsync  => iParHostWrite,
+            oSync   => hostWrite_noCs
         );
 
     hostWrite <= hostChipselect and hostWrite_noCs;
 
-    syncRead : entity work.sync
+    syncRead : entity work.synchronizer
+        generic map (
+            gStages => 2,
+            gInit   => cInactivated
+        )
         port map (
-            clk     => iClk,
-            rst     => iRst,
-            din     => iParHostRead,
-            dout    => hostRead_noCs
+            iArst   => iRst,
+            iClk    => iClk,
+            iAsync  => iParHostRead,
+            oSync   => hostRead_noCs
         );
 
     hostRead <= hostChipselect and hostRead_noCs;
 
     genSyncAle : if gMultiplex /= 0 generate
     begin
-        syncAle : entity work.sync
+        syncAle : entity work.synchronizer
+        generic map (
+            gStages => 2,
+            gInit   => cInactivated
+        )
         port map (
-            clk     => iClk,
-            rst     => iRst,
-            din     => iParHostAddressLatchEnable,
-            dout    => hostAle_noCs
+            iArst   => iRst,
+            iClk    => iClk,
+            iAsync  => iParHostAddressLatchEnable,
+            oSync   => hostAle_noCs
         );
 
-        edgeAle : entity work.edgeDet
+        edgeAle : entity work.edgedetector
         port map (
-            clk     => iClk,
-            rst     => iRst,
-            din     => hostAle_noCs,
-            any     => open,
-            rising  => hostAle_noCsEdge,
-            falling => open
+            iArst       => iRst,
+            iClk        => iClk,
+            iEnable     => cActivated,
+            iData       => hostAle_noCs,
+            oRising     => hostAle_noCsEdge,
+            oFalling    => open,
+            oAny        => open
         );
 
         hostAle <= hostChipselect and hostAle_noCsEdge;

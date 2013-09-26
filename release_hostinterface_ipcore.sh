@@ -29,6 +29,12 @@ cp altera/components/hostinterface_sw.tcl         release/altera/components
 cp altera/components/img/br.png                   release/altera/components/img
 cp altera/components/sdc/hostinterface-async.sdc  release/altera/components/sdc
 cp altera/components/tcl/hostinterface.tcl        release/altera/components/tcl
+cp common/lib/src/addrDecodeRtl.vhd               release/common/lib/src
+cp common/lib/src/binaryEncoderRtl.vhd            release/common/lib/src
+cp common/lib/src/edgedetectorRtl.vhd             release/common/lib/src
+cp common/lib/src/lutFileRtl.vhd                  release/common/lib/src
+cp common/lib/src/registerFileRtl.vhd             release/common/lib/src
+cp common/lib/src/synchronizerRtl.vhd             release/common/lib/src
 cp altera/hostinterface/src/alteraHostInterfaceRtl.vhd    release/altera/hostinterface/src
 cp common/hostinterface/revision.txt                      release/common/hostinterface
 cp common/hostinterface/src/hostInterfacePkg.vhd          release/common/hostinterface/src
@@ -37,10 +43,4 @@ cp common/hostinterface/src/irqGenRtl.vhd                 release/common/hostint
 cp common/hostinterface/src/magicBridgeRtl.vhd            release/common/hostinterface/src
 cp common/hostinterface/src/statusControlRegRtl.vhd       release/common/hostinterface/src
 cp common/hostinterface/src/parallelInterfaceRtl.vhd      release/common/hostinterface/src
-cp common/lib/src/addr_decoder.vhd                release/common/lib/src
-cp common/lib/src/binaryEncoderRtl.vhd            release/common/lib/src
-cp common/lib/src/edgedet.vhd                     release/common/lib/src
 cp common/lib/src/global.vhd                      release/common/lib/src
-cp common/lib/src/lutFileRtl.vhd                  release/common/lib/src
-cp common/lib/src/registerFileRtl.vhd             release/common/lib/src
-cp common/lib/src/sync.vhd                        release/common/lib/src

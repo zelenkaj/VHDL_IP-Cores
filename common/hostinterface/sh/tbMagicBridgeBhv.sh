@@ -5,24 +5,24 @@ PAR=$*
 VHDL_STD="-2008"
 OPTIMIZATION=
 PAR+=" "$OPTIMIZATION" "$VHDL_STD
-SRC_LIST="common/lib/src/global.vhd \
+SRC_LIST="\
+common/lib/src/global.vhd \
 common/lib/src/global.vhd  \
 common/util/src/clkGenBhv.vhd \
 common/util/src/resetGenBhv.vhd \
 common/util/src/busMasterPkg.vhd \
 common/util/src/busMasterBhv.vhd \
 common/util/src/spRamBhv.vhd \
-common/lib/src/addr_decoder.vhd \
+common/lib/src/addrDecodeRtl.vhd \
 common/lib/src/binaryEncoderRtl.vhd \
-common/lib/src/edgedet.vhd \
 common/lib/src/lutFileRtl.vhd \
 common/lib/src/registerFileRtl.vhd \
 common/lib/src/dpRam-e.vhd \
 common/util/src/dpRam-bhv-a.vhd \
-common/lib/src/sync.vhd \
 common/hostinterface/src/hostInterfacePkg.vhd \
 common/hostinterface/src/magicBridgeRtl.vhd \
-common/hostinterface/tb/tbMagicBridgeBhv.vhd"
+common/hostinterface/tb/tbMagicBridgeBhv.vhd \
+"
 
 TOP_LEVEL=tbMagicBridge
 

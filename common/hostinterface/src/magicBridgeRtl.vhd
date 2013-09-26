@@ -154,43 +154,40 @@ begin
 
     --! Generate Address Decoders
     genAddressDecoder : for i in 0 to gAddressSpaceCount-1 generate
-        insAddressDecoder : entity work.addr_decoder
+        insAddressDecoder : entity work.addrDecode
         generic map (
-            addrWidth_g         => iBridgeAddress'length,
-            baseaddr_g          => to_integer(
-            unsigned(gBaseAddressArray(i)(iBridgeAddress'range))),
-            highaddr_g          => to_integer(
-            unsigned(gBaseAddressArray(i+1)(iBridgeAddress'range))-1)
+            gAddrWidth  => iBridgeAddress'length,
+            gBaseAddr   => to_integer(unsigned(gBaseAddressArray(i)(iBridgeAddress'range))),
+            gHighAddr   => to_integer(unsigned(gBaseAddressArray(i+1)(iBridgeAddress'range))-1)
         )
         port map (
-            selin               => iBridgeSelect,
-            addr                => iBridgeAddress,
-            selout              => addrDecSelOneHot(i)
+            iEnable     => iBridgeSelect,
+            iAddress    => iBridgeAddress,
+            oSelect     => addrDecSelOneHot(i)
         );
     end generate;
 
     --! Convert one hot from address decoder to binary
     insBinaryEncoder : entity work.binaryEncoder
     generic map (
-        gDataWidth              => gAddressSpaceCount
+        gDataWidth => gAddressSpaceCount
     )
     port map (
-        iOneHot                 => addrDecSelOneHot,
-        oBinary                 => addrDecSelBinary
+        iOneHot => addrDecSelOneHot,
+        oBinary => addrDecSelBinary
     );
 
     --! select static base address in lut file
     insLutFile : entity work.lutFile
     generic map (
-        gLutCount               => gAddressSpaceCount,
-        gLutWidth               => cArrayStd32ElementSize,
-        gLutInitValue           => cBaseAddressArrayStd
-        (cBaseAddressArrayStd'left downto cArrayStd32ElementSize)
+        gLutCount       => gAddressSpaceCount,
+        gLutWidth       => cArrayStd32ElementSize,
+        gLutInitValue   => cBaseAddressArrayStd(cBaseAddressArrayStd'left downto cArrayStd32ElementSize)
         -- omit high address of last memory map
     )
     port map (
-        iAddrRead               => addrDecSelBinary,
-        oData                   => lutFileBase
+        iAddrRead   => addrDecSelBinary,
+        oData       => lutFileBase
     );
 
     -- calculate address offset within static space
@@ -200,7 +197,7 @@ begin
         --! select dynamic base address in register file
         insRegFile : entity work.registerFile
         generic map (
-            gRegCount           => gAddressSpaceCount
+            gRegCount => gAddressSpaceCount
         )
         port map (
             iClk                => iClk,

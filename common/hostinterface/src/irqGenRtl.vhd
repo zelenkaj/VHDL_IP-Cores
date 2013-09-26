@@ -93,14 +93,15 @@ architecture Rtl of irqGen is
 
 begin
     --! generate pulse for rising edge of sync
-    syncEdgeDet : entity work.edgeDet
+    syncEdgeDet : entity work.edgedetector
     port map (
-        din     => iSync,
-        rising  => syncRising,
-        falling => open,
-        any     => open,
-        clk     => iClk,
-        rst     => iRst
+        iArst       => iRst,
+        iClk        => iClk,
+        iEnable     => cActivated,
+        iData       => iSync,
+        oRising     => syncRising,
+        oFalling    => open,
+        oAny        => open
     );
 
     --! irq registers

@@ -299,23 +299,28 @@ begin
                 cInactivated;
 
     --! The synchronizer which protects us from crazy effects!
-    theSynchronizer : entity work.sync
+    theSynchronizer : entity work.synchronizer
+    generic map (
+        gStages => 2,
+        gInit   => cInactivated
+    )
     port map (
-        clk => iClk,
-        rst => iRst,
-        din => iIrqExtSync,
-        dout => extSync_sync
+        iArst   => iRst,
+        iClk    => iClk,
+        iAsync  => iIrqExtSync,
+        oSync   => extSync_sync
     );
 
     --! The Edge Detector for external sync
-    theExtSyncEdgeDet : entity work.edgeDet
+    theExtSyncEdgeDet : entity work.edgedetector
     port map (
-        din => extSync_sync,
-        rising => extSync_rising,
-        falling => extSync_falling,
-        any => extSync_any,
-        clk => iClk,
-        rst => iRst
+        iArst       => iRst,
+        iClk        => iClk,
+        iEnable     => cActivated,
+        iData       => extSync_sync,
+        oRising     => extSync_rising,
+        oFalling    => extSync_falling,
+        oAny        => extSync_any
     );
 
     --! The Magic Bridge
