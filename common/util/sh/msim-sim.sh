@@ -78,5 +78,12 @@ cp *.wlf $OUT_DIR -r
 #set mode of copied files
 chmod u+rw $OUT_DIR/* -R
 
+echo
+if [ $RET -ne 0 ]; then
+    echo "ERROR"
+else
+    echo "PASS"
+fi
+
 #exit with simulation return
 exit $RET
