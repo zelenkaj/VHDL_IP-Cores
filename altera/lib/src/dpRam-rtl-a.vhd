@@ -51,51 +51,36 @@ use altera_mf.altera_mf_components.all;
 
 architecture rtl of dpRam is
 begin
-
     altsyncram_component : altsyncram
         generic map (
-            address_reg_b                   => "CLOCK1",
-            byteena_reg_b                   => "CLOCK1",
-            byte_size                       => 8,
-            clock_enable_input_a            => "BYPASS",
-            clock_enable_input_b            => "BYPASS",
-            clock_enable_output_a           => "BYPASS",
-            clock_enable_output_b           => "BYPASS",
-            indata_reg_b                    => "CLOCK1",
-            init_file                       => "UNUSED",
-            intended_device_family          => "Cyclone IV",
-            lpm_type                        => "altsyncram",
-            numwords_a                      => gNumberOfWords,
-            numwords_b                      => gNumberOfWords,
-            operation_mode                  => "BIDIR_DUAL_PORT",
-            outdata_aclr_a                  => "NONE",
-            outdata_aclr_b                  => "NONE",
-            outdata_reg_a                   => "CLOCK0",
-            outdata_reg_b                   => "CLOCK1",
-            power_up_uninitialized          => "FALSE",
-            read_during_write_mode_port_a   => "NEW_DATA_WITH_NBE_READ",
-            read_during_write_mode_port_b   => "NEW_DATA_WITH_NBE_READ",
-            widthad_a                       => logDualis(gNumberOfWords),
-            widthad_b                       => logDualis(gNumberOfWords),
-            width_a                         => gWordWidth,
-            width_b                         => gWordWidth,
-            width_byteena_a                 => gWordWidth/8,
-            width_byteena_b                 => gWordWidth/8,
-            wrcontrol_wraddress_reg_b       => "CLOCK1"
+            lpm_type                => "altsyncram",
+            operation_mode          => "BIDIR_DUAL_PORT",
+            intended_device_family  => "Cyclone IV",
+            clock_enable_input_a    => "BYPASS",
+            clock_enable_input_b    => "BYPASS",
+            clock_enable_output_a   => "BYPASS",
+            clock_enable_output_b   => "BYPASS",
+            numwords_a              => gNumberOfWords,
+            numwords_b              => gNumberOfWords,
+            widthad_a               => logDualis(gNumberOfWords),
+            widthad_b               => logDualis(gNumberOfWords),
+            width_a                 => gWordWidth,
+            width_b                 => gWordWidth,
+            width_byteena_a         => gWordWidth/8,
+            width_byteena_b         => gWordWidth/8
         )
         port map (
-            wren_a          => iWriteEnable_A,
-            clock0          => iClk_A,
-            wren_b          => iWriteEnable_B,
-            clock1          => iClk_B,
-            byteena_a       => iByteenable_A,
-            byteena_b       => iByteenable_B,
-            address_a       => iAddress_A,
-            address_b       => iAddress_B,
-            data_a          => iWritedata_A,
-            data_b          => iWritedata_B,
-            q_a             => oReaddata_A,
-            q_b             => oReaddata_B
+            wren_a      => iWriteEnable_A,
+            clock0      => iClk_A,
+            wren_b      => iWriteEnable_B,
+            clock1      => iClk_B,
+            byteena_a   => iByteenable_A,
+            byteena_b   => iByteenable_B,
+            address_a   => iAddress_A,
+            address_b   => iAddress_B,
+            data_a      => iWritedata_A,
+            data_b      => iWritedata_B,
+            q_a         => oReaddata_A,
+            q_b         => oReaddata_B
         );
-
 end architecture rtl;
