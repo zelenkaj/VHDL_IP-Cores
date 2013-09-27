@@ -2,8 +2,8 @@
 --
 --! @brief Dual Port Ram Register Transfer Level Architecture
 --
---! @details This is the DPRAM model intended for synthesis on Altera
---! platforms only.
+--! @details This is the DPRAM intended for synthesis on Altera platforms only.
+--!          Timing as follows [clk-cycles]: write=0 / read=1
 --
 -------------------------------------------------------------------------------
 -- Architecture : rtl

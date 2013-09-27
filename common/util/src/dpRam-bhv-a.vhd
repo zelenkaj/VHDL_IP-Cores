@@ -4,6 +4,7 @@
 --! @brief Dual Port Ram Behavioural Architecture
 --
 --! @details This is the DPRAM model intended for simulation only.
+--!          Timing as follows [clk-cycles]: write=0 / read=1
 --
 -------------------------------------------------------------------------------
 --
@@ -56,11 +57,6 @@ architecture bhv of dpRam is
     shared variable vDpram : tRam(gNumberOfWords-1 downto 0) :=
         (others => (others => cInactivated));
 
-    --! Output register port A
-    signal outReg_A : std_logic_vector(gWordWidth-1 downto 0);
-    --! Output register port B
-    signal outReg_B : std_logic_vector(gWordWidth-1 downto 0);
-
     --! Dpram procedure - to be called within rising clock edge
     procedure dpram (
         variable vRam : inout tRam;
@@ -106,9 +102,8 @@ begin
                 iBe => iByteenable_A,
                 iWe => iWriteEnable_A,
                 iWrData => iWritedata_A,
-                oRdData => outReg_A
+                oRdData => oReaddata_A
             );
-            oReaddata_A <= outReg_A;
         end if;
     end process;
 
@@ -121,9 +116,8 @@ begin
                 iBe => iByteenable_B,
                 iWe => iWriteEnable_B,
                 iWrData => iWritedata_B,
-                oRdData => outReg_B
+                oRdData => oReaddata_B
             );
-            oReaddata_B <= outReg_B;
         end if;
     end process;
 end bhv;
