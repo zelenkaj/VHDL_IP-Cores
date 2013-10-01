@@ -4,14 +4,16 @@
 # Generation callback for nios2-bsp
 proc generationCallback { instName tgtDir bspDir } {
     set fileName        "appif-cfg.h"
+    set cmacro_off              "TBUF_OFFSET"
     set listCmacro_off  [list   "TBUF_OFFSET_CONACK" \
-                                "TBUF_OFFSET" \
+                                $cmacro_off \
                                 "TBUF_OFFSET_PROACK" ]
+    set cmacro_siz              "TBUF_SIZE"
     set listCmacro_siz  [list   "TBUF_SIZE_CONACK" \
-                                "TBUF_SIZE" \
+                                $cmacro_siz \
                                 "TBUF_SIZE_PROACK" ]
     set cmacro_ispro            "TBUF_PORTA_ISPRODUCER"
-    set listCmacro_oth  [list   "TBUF_NUM_CON" "TBUF_NUM_PRO" ]
+    set listCmacro_num  [list   "TBUF_NUM_CON" "TBUF_NUM_PRO" ]
 
     # Get path of this file
     set thisFileLoc [pwd]
@@ -26,18 +28,29 @@ proc generationCallback { instName tgtDir bspDir } {
     puts ""
 
     # Get all cmacro not offset or size names
-    set listCmacroName_oth ""
-    foreach cmacro $listCmacro_oth {
-        set listCmacroName_oth [concat $listCmacroName_oth [getAllCmacros $cmacro]]
+    set listCmacroName_num ""
+    foreach cmacro $listCmacro_num {
+        set listCmacroName_num [concat $listCmacroName_num [getAllCmacros $cmacro]]
     }
 
     # Get all values
-    set listCmacroValue_oth [getCmacroValues $listCmacroName_oth]
+    set listCmacroValue_num [getCmacroValues $listCmacroName_num]
+
+    # Get number of triple buffers
+    set totalNum 0
+    foreach num $listCmacroValue_num {
+        set totalNum [expr $totalNum + $num]
+    }
 
     # Get all cmacro offset names
     set listCmacroName_off ""
     foreach cmacro $listCmacro_off {
-        set listCmacroName_off [concat $listCmacroName_off [getAllCmacros $cmacro]]
+        #WORKAROUND: limit cmacro_off list to totalNum
+        if {$cmacro != $cmacro_off} {
+            set listCmacroName_off [concat $listCmacroName_off [getAllCmacros $cmacro]]
+        } else {
+            set listCmacroName_off [concat $listCmacroName_off [limitList [getAllCmacros $cmacro] $totalNum]]
+        }
     }
 
     # Get all offset values
@@ -46,14 +59,20 @@ proc generationCallback { instName tgtDir bspDir } {
     # Get all cmacro size names
     set listCmacroName_siz ""
     foreach cmacro $listCmacro_siz {
-        set listCmacroName_siz [concat $listCmacroName_siz [getAllCmacros $cmacro]]
+        #WORKAROUND: limit cmacro_siz list to totalNum
+        if {$cmacro != $cmacro_siz} {
+            set listCmacroName_siz [concat $listCmacroName_siz [getAllCmacros $cmacro]]
+        } else {
+            set listCmacroName_siz [concat $listCmacroName_siz [limitList [getAllCmacros $cmacro] $totalNum]]
+        }
     }
 
     # Get all size values
     set listCmacroValue_siz [getCmacroValues $listCmacroName_siz]
 
     # Get is-producer cmacros
-    set listCmacroName_ispro [getAllCmacros $cmacro_ispro]
+    #WORKAROUND: limit cmacro_ispro list to totalNum
+    set listCmacroName_ispro [limitList [getAllCmacros $cmacro_ispro] $totalNum]
 
     # Get is-producer values
     set listCmacroValue_ispro [getCmacroValues $listCmacroName_ispro]
@@ -90,7 +109,7 @@ proc generationCallback { instName tgtDir bspDir } {
     }
 
     # Write other macros
-    foreach cmacro $listCmacroName_oth value $listCmacroValue_oth {
+    foreach cmacro $listCmacroName_num value $listCmacroValue_num {
         writeFile_cmacro $fid $cmacro $value
     }
     writeFile_emptyLine $fid
@@ -166,6 +185,23 @@ proc getCmacroValues { listCmacros } {
     set tmp ""
     foreach cmacro $listCmacros {
         set tmp [concat $tmp [get_module_assignment embeddedsw.CMacro.$cmacro]]
+    }
+
+    return $tmp
+}
+
+# This procedure limits the provided list.
+proc limitList { listIn limit } {
+    set tmp ""
+    set cnt 0
+
+    foreach element $listIn {
+        set tmp [concat $tmp $element]
+        incr cnt
+
+        if { $cnt >= $limit} {
+            break
+        }
     }
 
     return $tmp
