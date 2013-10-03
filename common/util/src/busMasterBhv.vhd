@@ -99,6 +99,7 @@ architecture bhv of busMaster is
     );
 
     type tInterpreterStates is (
+        s_HOLDOFF,
         s_READOUT,
         s_INIT_REG,
         s_INSTR_FETCH,
@@ -144,7 +145,7 @@ architecture bhv of busMaster is
     file stimulifile            : text open read_mode is gStimuliFile;
 
     signal Reg, NextReg         : tRegSet;
-    signal InterpreterState     : tInterpreterStates := s_READOUT;
+    signal InterpreterState     : tInterpreterStates := s_HOLDOFF;
     signal fsmTrigger           : std_logic := '0';
 
     shared variable vLine       : line;
@@ -166,6 +167,12 @@ begin
         -- is not possible as the current signal driver would to be overwritten -> latches
 
         case InterpreterState is
+            when s_HOLDOFF =>
+                NextReg <= cInitRegSet;
+                if iEnable = cActivated then
+                    InterpreterState <= s_READOUT;
+                end if;
+
             when s_READOUT =>
 
                 if endfile(stimulifile) then                    -- EOF
