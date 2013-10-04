@@ -4,7 +4,7 @@
 --! @brief toplevel of host interface
 --
 --! @details The toplevel instantiates the necessary components for the
---! host interface like the Magic Bridge and the Status-/Control Registers.
+--! host interface like the Dynamic Bridge and the Status-/Control Registers.
 --
 -------------------------------------------------------------------------------
 --
@@ -59,6 +59,8 @@ entity hostInterface is
         gVersionRevision    : natural := 16#FF#;
         --! Version count
         gVersionCount       : natural := 0;
+        --! Use memory blocks or registers for translation address storage (registers = 0, memory blocks /= 0)
+        gBridgeUseMemBlock  : natural := 0;
         -- Base address mapping
         --! Base address Dynamic Buffer 0
         gBaseDynBuf0        : natural := 16#00800#;
@@ -122,7 +124,7 @@ entity hostInterface is
         iPcpWritedata           : in std_logic_vector(31 downto 0);
         --! MM slave pcp waitrequest
         oPcpWaitrequest         : out std_logic;
-        -- Memory Mapped Master for Host via Magic Bridge
+        -- Memory Mapped Master for Host via Dynamic Bridge
         --! MM master hostBridge address
         oHostBridgeAddress      : out std_logic_vector(29 downto 0);
         --! MM master hostBridge byteenable
@@ -154,10 +156,9 @@ end hostInterface;
 
 architecture Rtl of hostInterface is
     --! Magic
-    constant cMagic : natural := 16#504C4B00#;
-
+    constant cMagic                 : natural := 16#504C4B00#;
     --! Base address array
-    constant cBaseAddressArray : tArrayStd32 := (
+    constant cBaseAddressArray      : tArrayStd32 := (
         std_logic_vector(to_unsigned(gBaseDynBuf0,  cArrayStd32ElementSize)),
         std_logic_vector(to_unsigned(gBaseDynBuf1,  cArrayStd32ElementSize)),
         std_logic_vector(to_unsigned(gBaseErrCntr,  cArrayStd32ElementSize)),
@@ -172,49 +173,62 @@ architecture Rtl of hostInterface is
         std_logic_vector(to_unsigned(gBaseRpdo,     cArrayStd32ElementSize)),
         std_logic_vector(to_unsigned(gBaseRes,      cArrayStd32ElementSize))
     );
-
     --! Base address array count
     constant cBaseAddressArrayCount : natural := cBaseAddressArray'length;
-
     --! Base address set by host
-    constant cBaseAddressHostCount : natural := 2;
-
+    constant cBaseAddressHostCount  : natural := 2;
     --! Base address set by pcp
-    constant cBaseAddressPcpCount : natural := cBaseAddressArrayCount-cBaseAddressHostCount;
-
+    constant cBaseAddressPcpCount   : natural := cBaseAddressArrayCount-cBaseAddressHostCount;
     --! Number of interrupt sources (sync not included)
-    constant cIrqSourceCount : natural := 3;
+    constant cIrqSourceCount        : natural := 3;
+
+    --! Bridge fsm type
+    type tFsm is (
+        sIdle,
+        sReqAddr,
+        sAccess,
+        sDone
+    );
 
     --! select the bridge logic
-    signal bridgeSel : std_logic;
-
+    signal bridgeSel                : std_logic;
     --! invalid address range selected
-    signal invalidSel : std_logic;
-
+    signal invalidSel               : std_logic;
     --! select status control registers
-    signal statCtrlSel      : std_logic;
+    signal statCtrlSel              : std_logic;
     --! write status control register
-    signal statCtrlWrite    : std_logic;
+    signal statCtrlWrite            : std_logic;
     --! read status control register
-    signal statCtrlRead     : std_logic;
-
+    signal statCtrlRead             : std_logic;
     --! waitrequest from status/control
-    signal statCtrlWaitrequest  : std_logic;
+    signal statCtrlWaitrequest      : std_logic;
     --! readdata from status/control
-    signal statCtrlReaddata     : std_logic_vector(oHostReaddata'range);
-
-    --! bridge select output
-    signal bridgeSelOut : std_logic;
-
+    signal statCtrlReaddata         : std_logic_vector(oHostReaddata'range);
+    --! Bridge request signal
+    signal bridgeRequest            : std_logic;
+    --! Bridge enable control
+    signal bridgeEnable             : std_logic;
+    --! Bridge address is valid
+    signal bridgeAddrValid          : std_logic;
     --! LED from status/control registers
-    signal statCtrlLed : std_logic_vector(1 downto 0);
+    signal statCtrlLed              : std_logic_vector(1 downto 0);
+    --! The magic bridge outputs the dword address
+    signal hostBridgeAddress_dword  : std_logic_vector(oHostBridgeAddress'length-1 downto 2);
+    --! Bridge transfer done strobe
+    signal bridgeTfDone             : std_logic;
+    --! Bridge read data
+    signal bridgeReaddata           : std_logic_vector(iHostBridgeReaddata'range);
 
-    --! Avalon master needs byte addresses - localy dword is used
-    signal hostBridgeAddress_dword : std_logic_vector(oHostBridgeAddress'length-1 downto 2);
+    --! Bridge state machine
+    signal fsm      : tFsm;
+    --! Bridge state machine, next state
+    signal fsm_next : tFsm;
 
     -- base set signals
     --! BaseSet Write
     signal baseSetWrite         : std_logic;
+    --! BaseSet Read
+    signal baseSetRead          : std_logic;
     --! BaseSet byteenable
     signal baseSetByteenable    : std_logic_vector(3 downto 0);
     --! BaseSet Writedata
@@ -223,6 +237,8 @@ architecture Rtl of hostInterface is
     signal baseSetReaddata      : std_logic_vector(hostBridgeAddress_dword'range);
     --! BaseSet Address
     signal baseSetAddress       : std_logic_vector(logDualis(cBaseAddressArrayCount)-1 downto 0);
+    --! BaseSet acknowledge
+    signal baseSetAck           : std_logic;
 
     -- interrupt signals
     --! Irq master enable
@@ -235,10 +251,8 @@ architecture Rtl of hostInterface is
     signal irqSourcePending : std_logic_vector(cIrqSourceCount downto 0);
     --! Irq source set (no sync!)
     signal irqSourceSet     : std_logic_vector(cIrqSourceCount downto 1);
-
     --! sync signal
     signal syncSig : std_logic;
-
     --! synchronized ext sync
     signal extSync_sync     : std_logic;
     --! external sync signal
@@ -251,15 +265,6 @@ architecture Rtl of hostInterface is
     signal extSync_falling  : std_logic;
     --! external sync signal detected any edge
     signal extSync_any      : std_logic;
-
-    --! Bridge enable control
-    signal bridgeEnable : std_logic;
-
-    --! bridge read path ready
-    signal bridgeReady      : std_logic;
-    --! bridge read path
-    signal bridgeReaddata   : std_logic_vector(iHostBridgeReaddata'range);
-
 begin
 
     -- select status/control registers if host address is below 2 kB
@@ -283,7 +288,7 @@ begin
     -- host waitrequest from status/control, bridge or invalid
     oHostWaitrequest <= statCtrlWaitrequest when statCtrlSel = cActivated else
                         cInactivated when bridgeEnable = cInactivated else
-                        not bridgeReady when bridgeSel = cActivated else
+                        not bridgeTfDone when bridgeSel = cActivated else
                         not invalidSel;
 
     -- host readdata from status/control or bridge
@@ -297,6 +302,69 @@ begin
                 extSync_falling when extSyncConfig = cExtSyncEdgeFal else
                 extSync_any when extSyncConfig = cExtSyncEdgeAny else
                 cInactivated;
+
+    --! The bridge state machine handles the address translation of
+    --! dynamicBridge and finalizes the access to the host bridge master.
+    theFsmCom : process (
+        fsm,
+        bridgeSel,
+        bridgeAddrValid,
+        iHostRead,
+        iHostWrite,
+        iHostBridgeWaitrequest
+    )
+    begin
+        --default
+        fsm_next <= fsm;
+
+        case fsm is
+            when sIdle =>
+                if ( (iHostRead = cActivated or iHostWrite = cActivated) and
+                    bridgeSel = cActivated) then
+                    fsm_next <= sReqAddr;
+                end if;
+            when sReqAddr =>
+                if bridgeAddrValid = cActivated then
+                    fsm_next <= sAccess;
+                end if;
+            when sAccess =>
+                if iHostBridgeWaitrequest = cInactivated then
+                    fsm_next <= sDone;
+                end if;
+            when sDone =>
+                fsm_next <= sIdle;
+        end case;
+    end process;
+
+    bridgeRequest   <=  cActivated when fsm = sReqAddr else cInactivated;
+    bridgeTfDone    <=  cActivated when fsm = sDone else cInactivated;
+
+    --! Clock process to assign registers.
+    theClkPro : process(iRst, iClk)
+    begin
+        if iRst = cActivated then
+            fsm                     <= sIdle;
+            oHostBridgeAddress      <= (others => cInactivated);
+            oHostBridgeByteenable   <= (others => cInactivated);
+            oHostBridgeRead         <= cInactivated;
+            oHostBridgeWrite        <= cInactivated;
+            oHostBridgeWritedata    <= (others => cInactivated);
+        elsif rising_edge(iClk) then
+            fsm <= fsm_next;
+            if iHostBridgeWaitrequest = cInactivated then
+                oHostBridgeRead         <= cInactivated;
+                oHostBridgeWrite        <= cInactivated;
+                bridgeReaddata          <= iHostBridgeReaddata;
+            end if;
+            if bridgeAddrValid = cActivated then
+                oHostBridgeAddress      <= hostBridgeAddress_dword & "00";
+                oHostBridgeByteenable   <= iHostByteenable;
+                oHostBridgeRead         <= iHostRead;
+                oHostBridgeWrite        <= iHostWrite;
+                oHostBridgeWritedata    <= iHostWritedata;
+            end if;
+        end if;
+    end process;
 
     --! The synchronizer which protects us from crazy effects!
     theSynchronizer : entity work.synchronizer
@@ -323,69 +391,30 @@ begin
         oAny        => extSync_any
     );
 
-    --! The Magic Bridge
-    theMagicBridge : entity work.magicBridge
+    --! The Dynamic Bridge
+    theDynamicBridge : entity work.dynamicBridge
     generic map (
         gAddressSpaceCount      => cBaseAddressArrayCount-1,
+        gUseMemBlock            => gBridgeUseMemBlock,
         gBaseAddressArray       => cBaseAddressArray
     )
     port map (
         iClk                    => iClk,
         iRst                    => iRst,
         iBridgeAddress          => iHostAddress,
-        iBridgeSelect           => bridgeSel,
+        iBridgeRequest          => bridgeRequest,
         oBridgeAddress          => hostBridgeAddress_dword,
-        oBridgeSelectAny        => bridgeSelOut,
+        oBridgeSelectAny        => open,
         oBridgeSelect           => open,
+        oBridgeValid            => bridgeAddrValid,
         iBaseSetWrite           => baseSetWrite,
+        iBaseSetRead            => baseSetRead,
         iBaseSetByteenable      => baseSetByteenable,
         iBaseSetAddress         => baseSetAddress,
         iBaseSetData            => baseSetWritedata,
-        oBaseSetData            => baseSetReaddata
+        oBaseSetData            => baseSetReaddata,
+        oBaseSetAck             => basesetAck
     );
-
-    process(iClk)
-    begin
-        if rising_edge(iClk) then
-            if iRst = cActivated then
-                oHostBridgeWrite <= cInactivated;
-                oHostBridgeRead <= cInactivated;
-                oHostBridgeWritedata <= (others => cInactivated);
-                oHostBridgeByteenable <= (others => cInactivated);
-                oHostBridgeAddress <= (others => cInactivated);
-                bridgeReaddata <= (others => cInactivated);
-                bridgeReady <= cInactivated;
-            else
-                -- generate hostBridge write and read strobes
-                if bridgeSelOut = cActivated and
-                    iHostBridgeWaitrequest = cActivated and
-                    bridgeReady = cInactivated then
-                    -- if bridge is busy forward requests
-                    oHostBridgeWrite <= iHostWrite;
-                    oHostBridgeRead <= iHostRead;
-                else
-                    oHostBridgeWrite <= cInactivated;
-                    oHostBridgeRead <= cInactivated;
-                end if;
-
-                -- bridge writedata from host
-                oHostBridgeWritedata <= iHostWritedata;
-
-                -- bridge byteenable from host
-                oHostBridgeByteenable <= iHostByteenable;
-
-                -- bridge byte addressing
-                oHostBridgeAddress <= hostBridgeAddress_dword & "00";
-
-                -- bridge readdata
-                bridgeReaddata <= iHostBridgeReaddata;
-
-                -- bridge waitrequest
-                bridgeReady <= not iHostBridgeWaitrequest;
-            end if;
-        end if;
-    end process;
-
 
     --! The Irq Generator
     theIrqGen : entity work.irqGen
@@ -435,10 +464,12 @@ begin
         iPcpWritedata           => iPcpWritedata,
         oPcpWaitrequest         => oPcpWaitrequest,
         oBaseSetWrite           => baseSetWrite,
+        oBaseSetRead            => baseSetRead,
         oBaseSetByteenable      => baseSetByteenable,
         oBaseSetAddress         => baseSetAddress,
         iBaseSetData            => baseSetReaddata,
         oBaseSetData            => baseSetWritedata,
+        iBaseSetAck             => basesetAck,
         oIrqMasterEnable        => irqMasterEnable,
         oIrqSourceEnable        => irqSourceEnable,
         oIrqAcknowledge         => irqAcknowledge,

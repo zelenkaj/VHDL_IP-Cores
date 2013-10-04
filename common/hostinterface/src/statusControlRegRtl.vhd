@@ -107,8 +107,10 @@ entity statusControlReg is
         --! pcp waitrequest
         oPcpWaitrequest     : out std_logic;
         -- BaseSet link
-        --! BaseSet write strob
+        --! BaseSet write strobe
         oBaseSetWrite       : out std_logic;
+        --! BaseSet read strobe
+        oBaseSetRead        : out std_logic;
         --! BaseSet byteenable
         oBaseSetByteenable  : out std_logic_vector;
         --! BaseSet address bus
@@ -117,6 +119,8 @@ entity statusControlReg is
         iBaseSetData        : in std_logic_vector;
         --! BaseSet write data bus
         oBaseSetData        : out std_logic_vector;
+        --! BaseSet acknowledge
+        iBaseSetAck         : in std_logic;
         -- Interrupt control
         --! master enable
         oIrqMasterEnable    : out std_logic;
@@ -254,6 +258,8 @@ architecture Rtl of statusControlReg is
     signal hostBaseSetData  : std_logic_vector(iBaseSetData'range);
     --! host base write
     signal hostBaseSetWrite : std_logic;
+    --! host base read
+    signal hostBaseSetRead  : std_logic;
     --! pcp base writedata
     signal pcpBaseSetData   : std_logic_vector(iBaseSetData'range);
     --! pcp base write
@@ -278,8 +284,13 @@ begin
         end if;
     end process;
 
-    oHostWaitrequest    <= not(iHostWrite or iHostRead);
-    oPcpWaitrequest     <= not(iPcpWrite or iPcpRead);
+    oHostWaitrequest    <=  not iBaseSetAck when (hostBaseSetRead = cActivated or
+                                            hostBaseSetWrite = cActivated) else
+                            not(iHostWrite or iHostRead);
+
+    oPcpWaitrequest     <=  not iBaseSetAck when (pcpBaseSetRead = cActivated or
+                                            pcpBaseSetWrite = cActivated) else
+                            not(iPcpWrite or iPcpRead);
 
     oIrqMasterEnable    <= regSynchron.irqMasterEnable;
     oIrqSourceEnable    <= regSynchron.irqSrcEnableHost and regSynchron.irqSrcEnablePcp;
@@ -301,7 +312,8 @@ begin
                             when pcpBaseSetRead = cActivated or pcpBaseSetWrite = cActivated else
                         iHostAddress(oBaseSetAddress'range);
 
-    oBaseSetWrite <= pcpBaseSetWrite or hostBaseSetWrite;
+    oBaseSetWrite   <= pcpBaseSetWrite or hostBaseSetWrite;
+    oBaseSetRead    <= pcpBaseSetRead or hostBaseSetRead;
 
     --! register access
     regAcc : process (
@@ -333,6 +345,7 @@ begin
         oIrqAcknowledge     <= (others => cInactivated);
         hostBaseSetData     <= (others => cInactivated);
         hostBaseSetWrite    <= cInactivated;
+        hostBaseSetRead     <= cInactivated;
         oIrqSet             <= (others => cInactivated);
         oPcpReaddata        <= (others => cInactivated);
         pcpBaseSetData      <= (others => cInactivated);
@@ -462,6 +475,8 @@ begin
                     if iHostWrite = cActivated then
                         hostBaseSetData     <= iHostWritedata(hostBaseSetData'range);
                         hostBaseSetWrite    <= cActivated;
+                    else
+                        hostBaseSetRead     <= cActivated;
                     end if;
                 end if;
 
