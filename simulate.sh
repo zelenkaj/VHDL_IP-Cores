@@ -43,8 +43,8 @@ do
     popd >> /dev/null
 
     #copy work to results
-    mkdir ${DIR_RESULTS} -p
-    mv $TBSH_DIR/_out_* ./${DIR_RESULTS}
+    mkdir ${DIR_RESULTS}/${TBSH_DIR} -p
+    mv ${TBSH_DIR}/_out_* ./${DIR_RESULTS}/${TBSH_DIR}
 
     #check return
     if [ $RET -ne 0 ]; then
