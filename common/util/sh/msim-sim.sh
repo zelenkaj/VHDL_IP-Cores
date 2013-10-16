@@ -7,8 +7,9 @@ DOFILE=$ROOT/common/util/do/sim.do
 TOP_LEVEL=$1
 VHDL_STD="-93"
 READ_MODE=
-OPTIMIZATION=
 NO_RUN=
+PAR_VCOM=
+PAR_VSIM=
 SRC_LIST=
 GEN_LIST=
 OUT_DIR=_out_$TOP_LEVEL
@@ -36,22 +37,27 @@ do
     elif [ "$i" == "-2008" ]; then
         VHDL_STD="$i"
         READ_MODE=
-    elif [ "$i" == "-novopt" ]; then
-        OPTIMIZATION="$i"
-        READ_MODE=
     elif [ "$i" == "-s" ]; then
         READ_MODE="SRC"
     elif [ "$i" == "-g" ]; then
         READ_MODE="GEN"
+    elif [ "$i" == "-vcom" ]; then
+        READ_MODE="VCOM"
+    elif [ "$i" == "-vsim" ]; then
+        READ_MODE="VSIM"
     elif [ "$READ_MODE" == "SRC" ]; then
         SRC_LIST+="$ROOT/$i "
     elif [ "$READ_MODE" == "GEN" ]; then
         GEN_LIST+="-g$i "
+    elif [ "$READ_MODE" == "VCOM" ]; then
+        PAR_VCOM+="$i "
+    elif [ "$READ_MODE" == "VSIM" ]; then
+        PAR_VSIM+="$i "
     fi
 done
 
 #compile source files
-vcom $VHDL_STD -work work $SRC_LIST
+vcom $VHDL_STD -work work $SRC_LIST $PAR_VCOM
 if test $? -ne 0
 then
     exit 1
@@ -63,7 +69,7 @@ if [ -n "$NO_RUN" ]; then
 fi
 
 #simulate design
-vsim $OPTIMIZATION $TOP_LEVEL -c -do $DOFILE -lib work $GEN_LIST
+vsim $TOP_LEVEL -c -do $DOFILE -lib work $GEN_LIST $PAR_VSIM
 
 #catch simulation return
 RET=$?
