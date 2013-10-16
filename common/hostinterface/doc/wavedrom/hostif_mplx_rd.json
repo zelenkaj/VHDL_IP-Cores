@@ -1,0 +1,9 @@
+{ "signal" : [
+  { "name": "CS",          "wave": "01.....|...0." },
+  { "name": "ALE",         "wave": "01.0...|....." },
+  { "name": "WR",          "wave": "0......|....." },
+  { "name": "RD",          "wave": "0.....1|...0." },
+  { "name": "BE",          "wave": "......5|...x.",    "data": ["BE"] },
+  { "name": "AD",          "wave": "z3....z|x4..z",    "data": ["ADDR","READDATA"] },
+  { "name": "ACK",         "wave": "0......|.1.0." }
+]}

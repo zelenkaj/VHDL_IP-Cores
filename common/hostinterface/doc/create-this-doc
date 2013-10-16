@@ -1,0 +1,24 @@
+#!/bin/bash
+# Generates the full documentation
+
+# path to root
+ROOT_DIR=../../..
+
+# script to generate wavedrome
+RUN_WAVEDROM=${ROOT_DIR}/tools/wavedrom.sh
+
+# call to generate doxygen
+RUN_DOXYGEN=doxygen
+
+#find all json files
+JSON_LIST=`find . -name "*.json"`
+
+#loop through that list
+for JSON in $JSON_LIST
+do
+    ./${RUN_WAVEDROM} ${JSON}
+done
+
+${RUN_DOXYGEN}
+
+exit $?
