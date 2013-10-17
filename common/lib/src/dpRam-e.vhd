@@ -52,7 +52,9 @@ entity dpRam is
         --! Data width [bit]
         gWordWidth      : natural := 32;
         --! Number of words
-        gNumberOfWords  : natural := 1024
+        gNumberOfWords  : natural := 1024;
+        --! Initialization file
+        gInitFile       : string := "UNUSED"
     );
     port (
         -- PORT A

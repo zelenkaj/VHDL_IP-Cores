@@ -56,6 +56,7 @@ begin
             lpm_type                => "altsyncram",
             operation_mode          => "BIDIR_DUAL_PORT",
             intended_device_family  => "Cyclone IV",
+            init_file               => gInitFile,
             clock_enable_input_a    => "BYPASS",
             clock_enable_input_b    => "BYPASS",
             clock_enable_output_a   => "BYPASS",

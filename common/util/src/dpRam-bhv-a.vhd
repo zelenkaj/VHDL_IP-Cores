@@ -93,6 +93,10 @@ architecture bhv of dpRam is
         end if;
     end procedure;
 begin
+    assert (gInitFile = "unused")
+    report "Memory initialization is not supported in this architecture!"
+    severity warning;
+
     portAProc : process(iClk_A)
     begin
         if rising_edge(iClk_A) then
