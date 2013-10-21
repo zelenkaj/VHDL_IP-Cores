@@ -1,23 +1,24 @@
 #!/bin/bash
-#
+# ./release_tripleBuffer_ipcore.sh RELEASE_DIR
+# e.g.: $ ./release_hostinterface_ipcore release
 
-# clean release dir
-if [ -d release ]
+DIR_RELEASE=$1
+
+if [ -z "${DIR_RELEASE}" ];
 then
-    echo "clean release dir..."
-    rm -r release
+    DIR_RELEASE=release
 fi
 
 # create dir structure
 echo "create dir structure..."
-mkdir -p release/altera/components
-mkdir -p release/altera/components/img
-mkdir -p release/altera/components/sdc
-mkdir -p release/altera/components/tcl
-mkdir -p release/altera/hostinterface/src
-mkdir -p release/altera/lib/src
-mkdir -p release/common/hostinterface/src
-mkdir -p release/common/lib/src
+mkdir -p ${DIR_RELEASE}/altera/components
+mkdir -p ${DIR_RELEASE}/altera/components/img
+mkdir -p ${DIR_RELEASE}/altera/components/sdc
+mkdir -p ${DIR_RELEASE}/altera/components/tcl
+mkdir -p ${DIR_RELEASE}/altera/hostinterface/src
+mkdir -p ${DIR_RELEASE}/altera/lib/src
+mkdir -p ${DIR_RELEASE}/common/hostinterface/src
+mkdir -p ${DIR_RELEASE}/common/lib/src
 
 # copy docs
 #echo "copy docs..."
@@ -25,26 +26,26 @@ mkdir -p release/common/lib/src
 
 # copy Altera host interface
 echo "copy altera powerlink ipcore..."
-cp altera/components/hostinterface_hw.tcl         release/altera/components
-cp altera/components/hostinterface_sw.tcl         release/altera/components
-cp altera/components/img/br.png                   release/altera/components/img
-cp altera/components/sdc/hostinterface-async.sdc  release/altera/components/sdc
-cp altera/components/tcl/hostinterface.tcl        release/altera/components/tcl
-cp altera/lib/src/dpRam-rtl-a.vhd                 release/altera/lib/src
-cp common/lib/src/dpRam-e.vhd                     release/common/lib/src
-cp common/lib/src/addrDecodeRtl.vhd               release/common/lib/src
-cp common/lib/src/binaryEncoderRtl.vhd            release/common/lib/src
-cp common/lib/src/cntRtl.vhd                      release/common/lib/src
-cp common/lib/src/edgedetectorRtl.vhd             release/common/lib/src
-cp common/lib/src/lutFileRtl.vhd                  release/common/lib/src
-cp common/lib/src/registerFileRtl.vhd             release/common/lib/src
-cp common/lib/src/synchronizerRtl.vhd             release/common/lib/src
-cp altera/hostinterface/src/alteraHostInterfaceRtl.vhd    release/altera/hostinterface/src
-cp common/hostinterface/revision.txt                      release/common/hostinterface
-cp common/hostinterface/src/hostInterfacePkg.vhd          release/common/hostinterface/src
-cp common/hostinterface/src/hostInterfaceRtl.vhd          release/common/hostinterface/src
-cp common/hostinterface/src/irqGenRtl.vhd                 release/common/hostinterface/src
-cp common/hostinterface/src/dynamicBridgeRtl.vhd          release/common/hostinterface/src
-cp common/hostinterface/src/statusControlRegRtl.vhd       release/common/hostinterface/src
-cp common/hostinterface/src/parallelInterfaceRtl.vhd      release/common/hostinterface/src
-cp common/lib/src/global.vhd                      release/common/lib/src
+cp altera/components/hostinterface_hw.tcl                   ${DIR_RELEASE}/altera/components
+cp altera/components/hostinterface_sw.tcl                   ${DIR_RELEASE}/altera/components
+cp altera/components/img/br.png                             ${DIR_RELEASE}/altera/components/img
+cp altera/components/sdc/hostinterface-async.sdc            ${DIR_RELEASE}/altera/components/sdc
+cp altera/components/tcl/hostinterface.tcl                  ${DIR_RELEASE}/altera/components/tcl
+cp altera/lib/src/dpRam-rtl-a.vhd                           ${DIR_RELEASE}/altera/lib/src
+cp common/lib/src/dpRam-e.vhd                               ${DIR_RELEASE}/common/lib/src
+cp common/lib/src/addrDecodeRtl.vhd                         ${DIR_RELEASE}/common/lib/src
+cp common/lib/src/binaryEncoderRtl.vhd                      ${DIR_RELEASE}/common/lib/src
+cp common/lib/src/cntRtl.vhd                                ${DIR_RELEASE}/common/lib/src
+cp common/lib/src/edgedetectorRtl.vhd                       ${DIR_RELEASE}/common/lib/src
+cp common/lib/src/lutFileRtl.vhd                            ${DIR_RELEASE}/common/lib/src
+cp common/lib/src/registerFileRtl.vhd                       ${DIR_RELEASE}/common/lib/src
+cp common/lib/src/synchronizerRtl.vhd                       ${DIR_RELEASE}/common/lib/src
+cp altera/hostinterface/src/alteraHostInterfaceRtl.vhd      ${DIR_RELEASE}/altera/hostinterface/src
+cp common/hostinterface/revision.txt                        ${DIR_RELEASE}/common/hostinterface
+cp common/hostinterface/src/hostInterfacePkg.vhd            ${DIR_RELEASE}/common/hostinterface/src
+cp common/hostinterface/src/hostInterfaceRtl.vhd            ${DIR_RELEASE}/common/hostinterface/src
+cp common/hostinterface/src/irqGenRtl.vhd                   ${DIR_RELEASE}/common/hostinterface/src
+cp common/hostinterface/src/dynamicBridgeRtl.vhd            ${DIR_RELEASE}/common/hostinterface/src
+cp common/hostinterface/src/statusControlRegRtl.vhd         ${DIR_RELEASE}/common/hostinterface/src
+cp common/hostinterface/src/parallelInterfaceRtl.vhd        ${DIR_RELEASE}/common/hostinterface/src
+cp common/lib/src/global.vhd                                ${DIR_RELEASE}/common/lib/src
