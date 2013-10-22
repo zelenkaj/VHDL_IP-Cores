@@ -59,12 +59,13 @@ architecture bhv of dpRam is
 
     --! Dpram procedure - to be called within rising clock edge
     procedure dpram (
-        variable vRam : inout tRam;
-        signal iAddr : in std_logic_vector;
-        signal iBe : in std_logic_vector;
-        signal iWe : in std_logic;
-        signal iWrData : in std_logic_vector;
-        signal oRdData : out std_logic_vector
+        variable vRam   : inout tRam;
+        signal iAddr    : in std_logic_vector;
+        signal iEn      : in std_logic;
+        signal iBe      : in std_logic_vector;
+        signal iWe      : in std_logic;
+        signal iWrData  : in std_logic_vector;
+        signal oRdData  : out std_logic_vector
     ) is
         variable vAddr : natural;
     begin
@@ -79,17 +80,19 @@ architecture bhv of dpRam is
             vAddr := 0;
         end if;
 
-        -- read from dpram
-        oRdData <= vRam(vAddr);
+        if iEn = cActivated then
+            -- read from dpram
+            oRdData <= vRam(vAddr);
 
-        -- write to dpram
-        if iWe = cActivated then
-            -- bytewise...
-            for i in iBe'range loop
-                if iBe(i) = cActivated then
-                    vRam(vAddr)((i+1)*8-1 downto i*8) := iWrData((i+1)*8-1 downto i*8);
-                end if;
-            end loop;
+            -- write to dpram
+            if iWe = cActivated then
+                -- bytewise...
+                for i in iBe'range loop
+                    if iBe(i) = cActivated then
+                        vRam(vAddr)((i+1)*8-1 downto i*8) := iWrData((i+1)*8-1 downto i*8);
+                    end if;
+                end loop;
+            end if;
         end if;
     end procedure;
 begin
@@ -101,10 +104,11 @@ begin
     begin
         if rising_edge(iClk_A) then
             dpram (
-                vRam => vDpram,
-                iAddr => iAddress_A,
-                iBe => iByteenable_A,
-                iWe => iWriteEnable_A,
+                vRam    => vDpram,
+                iAddr   => iAddress_A,
+                iEn     => iEnable_A,
+                iBe     => iByteenable_A,
+                iWe     => iWriteEnable_A,
                 iWrData => iWritedata_A,
                 oRdData => oReaddata_A
             );
@@ -115,10 +119,11 @@ begin
     begin
         if rising_edge(iClk_B) then
             dpram (
-                vRam => vDpram,
-                iAddr => iAddress_B,
-                iBe => iByteenable_B,
-                iWe => iWriteEnable_B,
+                vRam    => vDpram,
+                iAddr   => iAddress_B,
+                iEn     => iEnable_B,
+                iBe     => iByteenable_B,
+                iWe     => iWriteEnable_B,
                 iWrData => iWritedata_B,
                 oRdData => oReaddata_B
             );

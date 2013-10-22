@@ -123,12 +123,14 @@ begin
         )
         port map (
             iClk_A          => clk,
+            iEnable_A       => cActivated,
             iWriteEnable_A  => dutA.write,
             iAddress_A      => dutA.address,
             iByteenable_A   => dutA.byteenable,
             iWritedata_A    => dutA.writedata,
             oReaddata_A     => dutA.readdata,
             iClk_B          => clk,
+            iEnable_B       => cActivated,
             iWriteEnable_B  => dutB.write,
             iByteenable_B   => dutB.byteenable,
             iAddress_B      => dutB.address,

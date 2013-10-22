@@ -70,7 +70,7 @@ architecture rtl of dpRam is
     --! Port B readport
     signal readdataB    : tDataPort;
 begin
-    assert (gInitFile = "unused")
+    assert (gInitFile = "UNUSED")
     report "Memory initialization is not supported in this architecture!"
     severity warning;
 
@@ -84,20 +84,22 @@ begin
     PORTA : process(iClk_A)
     begin
         if rising_edge(iClk_A) then
-            if iWriteEnable_A = cActivated then
-                for i in iByteenable_A'range loop
-                    if iByteenable_A(i) = cActivated then
-                        -- write byte to DPRAM
-                        vDpram(to_integer(unsigned(iAddress_A)))(
-                            (i+1)*cByte-1 downto i*cByte
-                        ) := iWritedata_A(
-                            (i+1)*cByte-1 downto i*cByte
-                        );
-                    end if; --byteenable
-                end loop;
-            end if; --writeenable
-            -- read word from DPRAM
-            readdataA <= vDpram(to_integer(unsigned(iAddress_A)));
+            if iEnable_A = cActivated then
+                if iWriteEnable_A = cActivated then
+                    for i in iByteenable_A'range loop
+                        if iByteenable_A(i) = cActivated then
+                            -- write byte to DPRAM
+                            vDpram(to_integer(unsigned(iAddress_A)))(
+                                (i+1)*cByte-1 downto i*cByte
+                            ) := iWritedata_A(
+                                (i+1)*cByte-1 downto i*cByte
+                            );
+                        end if; --byteenable
+                    end loop;
+                end if; --writeenable
+                -- read word from DPRAM
+                readdataA <= vDpram(to_integer(unsigned(iAddress_A)));
+            end if; --enable
         end if;
     end process PORTA;
 
@@ -107,20 +109,22 @@ begin
     PORTB : process(iClk_B)
     begin
         if rising_edge(iClk_B) then
-            if iWriteEnable_B = cActivated then
-                for i in iByteenable_B'range loop
-                    if iByteenable_B(i) = cActivated then
-                        -- write byte to DPRAM
-                        vDpram(to_integer(unsigned(iAddress_B)))(
-                            (i+1)*cByte-1 downto i*cByte
-                        ) := iWritedata_B(
-                            (i+1)*cByte-1 downto i*cByte
-                        );
-                    end if; --byteenable
-                end loop;
-            end if; --writeenable
-            -- read word from DPRAM
-            readdataB <= vDpram(to_integer(unsigned(iAddress_B)));
+            if iEnable_B = cActivated then
+                if iWriteEnable_B = cActivated then
+                    for i in iByteenable_B'range loop
+                        if iByteenable_B(i) = cActivated then
+                            -- write byte to DPRAM
+                            vDpram(to_integer(unsigned(iAddress_B)))(
+                                (i+1)*cByte-1 downto i*cByte
+                            ) := iWritedata_B(
+                                (i+1)*cByte-1 downto i*cByte
+                            );
+                        end if; --byteenable
+                    end loop;
+                end if; --writeenable
+                -- read word from DPRAM
+                readdataB <= vDpram(to_integer(unsigned(iAddress_B)));
+            end if; --enable
         end if;
     end process PORTB;
 end architecture rtl;

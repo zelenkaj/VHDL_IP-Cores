@@ -53,14 +53,9 @@ architecture rtl of dpRam is
 begin
     altsyncram_component : altsyncram
         generic map (
-            lpm_type                => "altsyncram",
             operation_mode          => "BIDIR_DUAL_PORT",
             intended_device_family  => "Cyclone IV",
             init_file               => gInitFile,
-            clock_enable_input_a    => "BYPASS",
-            clock_enable_input_b    => "BYPASS",
-            clock_enable_output_a   => "BYPASS",
-            clock_enable_output_b   => "BYPASS",
             numwords_a              => gNumberOfWords,
             numwords_b              => gNumberOfWords,
             widthad_a               => logDualis(gNumberOfWords),
@@ -71,17 +66,19 @@ begin
             width_byteena_b         => gWordWidth/8
         )
         port map (
-            wren_a      => iWriteEnable_A,
             clock0      => iClk_A,
-            wren_b      => iWriteEnable_B,
-            clock1      => iClk_B,
-            byteena_a   => iByteenable_A,
-            byteena_b   => iByteenable_B,
+            clocken0    => iEnable_A,
+            wren_a      => iWriteEnable_A,
             address_a   => iAddress_A,
-            address_b   => iAddress_B,
+            byteena_a   => iByteenable_A,
             data_a      => iWritedata_A,
-            data_b      => iWritedata_B,
             q_a         => oReaddata_A,
+            clock1      => iClk_B,
+            clocken1    => iEnable_B,
+            wren_b      => iWriteEnable_B,
+            address_b   => iAddress_B,
+            byteena_b   => iByteenable_B,
+            data_b      => iWritedata_B,
             q_b         => oReaddata_B
         );
 end architecture rtl;

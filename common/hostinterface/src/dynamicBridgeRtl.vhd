@@ -350,12 +350,14 @@ begin
         )
         port map(
             iClk_A             => iClk,
+            iEnable_A          => cActivated,
             iWriteEnable_A     => dprPortA.write,
             iAddress_A         => dprPortA.address,
             iByteEnable_A      => dprPortA.byteenable,
             iWritedata_A       => dprPortA.writedata,
             oReaddata_A        => dprPortA.readdata,
             iClk_B             => iClk,
+            iEnable_B          => cActivated,
             iWriteEnable_B     => dprPortB.write,
             iAddress_B         => dprPortB.address,
             iByteEnable_B      => dprPortB.byteenable,

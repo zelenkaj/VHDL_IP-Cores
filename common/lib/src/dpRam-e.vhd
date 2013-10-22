@@ -60,6 +60,8 @@ entity dpRam is
         -- PORT A
         --! Clock of port A
         iClk_A          : in std_logic;
+        --! Enable of port A
+        iEnable_A       : in std_logic;
         --! Write enable of port A
         iWriteEnable_A  : in std_logic;
         --! Address of port A
@@ -73,6 +75,8 @@ entity dpRam is
         -- PORT B
         --! Clock of port B
         iClk_B          : in std_logic;
+        --! Enable of port B
+        iEnable_B       : in std_logic;
         --! Write enable of port B
         iWriteEnable_B  : in std_logic;
         --! Byteenable of port B
