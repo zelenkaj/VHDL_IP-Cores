@@ -54,6 +54,9 @@ package Global is
     constant cByteLength    : natural := 8;
     constant cWordLength    : natural := 2 * cByteLength;
 
+    constant cFalse         : natural := 0;
+    constant cTrue          : natural := 1;
+
     function LogDualis(cNumber : natural) return natural;
 
     function MAX (a : natural; b : natural) return natural;
@@ -111,7 +114,7 @@ package body Global is
     function integerToBoolean (a : integer) return boolean is
         variable vRes : boolean;
     begin
-        if a = 0 then
+        if a = cFalse then
             vRes := false;
         else
             vRes := true;
@@ -124,9 +127,9 @@ package body Global is
         variable vRes : integer;
     begin
         if a = false then
-            vRes := 0;
+            vRes := cFalse;
         else
-            vRes := 1;
+            vRes := cTrue;
         end if;
 
         return vRes;
