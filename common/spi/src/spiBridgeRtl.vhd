@@ -149,7 +149,8 @@ begin
             iBusWaitrequest     => iBusWaitrequest
         );
 
-    theSpiCore : entity work.spiSlave
+    --! Always use the asynchronous clock architecture for spi slave.
+    theSpiCore : entity work.spiSlave(rtl_aclk)
         generic map (
             gRegisterSize   => gRegisterSize,
             gPolarity       => gPolarity,

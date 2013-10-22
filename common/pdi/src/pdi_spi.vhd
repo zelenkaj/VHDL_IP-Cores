@@ -292,7 +292,8 @@ begin
         end if;
     end process;
 
-    theRealSpiCore : entity work.spiSlave
+    --! Always use the synchronous clock architecture for spi slave.
+    theRealSpiCore : entity work.spiSlave(rtl_sclk)
         generic map (
             gRegisterSize => spiSize_g,
             gPolarity => booleanToInteger(cpol_g),
