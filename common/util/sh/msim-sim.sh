@@ -57,7 +57,7 @@ do
 done
 
 #compile source files
-vcom $VHDL_STD -work work $SRC_LIST $PAR_VCOM
+vcom $VHDL_STD -work work $SRC_LIST $PAR_VCOM -check_synthesis
 if test $? -ne 0
 then
     exit 1
