@@ -28,39 +28,34 @@ do
     TBSH_DIR=`dirname $TBSH`
     TBSH_SRC=`basename $TBSH`
 
-    echo "Run testbench in path ${TBSH}..."
+    echo "###############################################################################"
+    echo "# Run testbench in path ${TBSH}"
 
     #change to directory of current tb*.sh
     pushd $TBSH_DIR >> /dev/null
 
     #run sh
     chmod +x $TBSH_SRC
-    ./$TBSH_SRC >> /dev/null
+    ./$TBSH_SRC
 
     #store return
     RET=$?
 
     popd >> /dev/null
 
-    #copy work to results
-    mkdir ${DIR_RESULTS}/${TBSH_DIR} -p
-    mv ${TBSH_DIR}/_out_* ./${DIR_RESULTS}/${TBSH_DIR}
-
     #check return
     if [ $RET -ne 0 ]; then
         echo "-> ERROR!"
-        #Print transcript of faulty simulation
-        echo
-        echo "###############################################################################"
-        echo "### TRANSCRIPT (${TBSH_DIR}/transcript)"
-        pushd $TBSH_DIR >> /dev/null
-        cat transcript
-        popd >> /dev/null
-        echo "###############################################################################"
         break
     else
         echo "-> SUCCESSFUL!"
     fi
+
+    #copy work to results
+    mkdir ${DIR_RESULTS}/${TBSH_DIR} -p
+    mv ${TBSH_DIR}/_out_* ./${DIR_RESULTS}/${TBSH_DIR}
+
+    echo "###############################################################################"
     echo
 done
 
@@ -78,4 +73,4 @@ fi
 
 echo "Runtime=${TIME_DUR})"
 
-exit 0
+exit $RET
