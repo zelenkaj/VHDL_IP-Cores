@@ -81,9 +81,6 @@ architecture bhv of dpRam is
         end if;
 
         if iEn = cActivated then
-            -- read from dpram
-            oRdData <= vRam(vAddr);
-
             -- write to dpram
             if iWe = cActivated then
                 -- bytewise...
@@ -93,6 +90,8 @@ architecture bhv of dpRam is
                     end if;
                 end loop;
             end if;
+            -- read from dpram
+            oRdData <= vRam(vAddr);
         end if;
     end procedure;
 begin
