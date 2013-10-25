@@ -478,12 +478,14 @@ begin
         )
         port map (
             iClk_A          => dprPortA.clk,
+            iEnable_A       => cActivated,
             iWriteEnable_A  => dprPortA.write,
             iAddress_A      => dprPortA.address,
             iByteenable_A   => dprPortA.byteenable,
             iWritedata_A    => dprPortA.writedata,
             oReaddata_A     => dprPortA.readdata,
             iClk_B          => dprPortB.clk,
+            iEnable_B       => cActivated,
             iWriteEnable_B  => dprPortB.write,
             iAddress_B      => dprPortB.address,
             iByteenable_B   => dprPortB.byteenable,
