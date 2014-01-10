@@ -177,8 +177,8 @@ PORT irqSync_irq = "", DIR = I, SIGIS = INTERRUPT, SENSITIVITY = LEVEL_HIGH
 PORT irqOut_irq = "", DIR = O, SIGIS = INTERRUPT, SENSITIVITY = LEVEL_HIGH
 PORT iExtSync_exsync = "" , DIR = I, IO_IF = LED
 PORT iNodeId_nodeid = "" , DIR = I, VEC = [7:0], IO_IF = LED
-PORT iPlkLed_lederr = "" , DIR = O, IO_IF = LED
-PORT iPlkLed_ledst = "" , DIR = O, IO_IF = LED
+PORT oPlkLed_lederr = "" , DIR = O, IO_IF = LED
+PORT oPlkLed_ledst = "" , DIR = O, IO_IF = LED
 ## Parallel Interface Signals
 PORT iExtSync_exsync = "", DIR = I, IO_IF = PAP, ISVALID = (gHostIfType == 1)
 PORT iParHost_chipselect = "", DIR = I, IO_IF = PAP, ISVALID = (gHostIfType == 1)
@@ -192,11 +192,11 @@ PORT iParHost_data_io = "", DIR = I, VEC =[gParallelDataWidth-1:0],IO_IF = PAP, 
 PORT oParHost_data_io = "", DIR = O, VEC =[gParallelDataWidth-1:0],IO_IF = PAP, ISVALID = (gHostIfType == 1)
 PORT oParHost_data_io_tri = "", DIR = O, IO_IF = PAP, ISVALID = (gHostIfType == 1)
 PORT ioParHost_data_io = "", DIR = INOUT, VEC =[gParallelDataWidth-1:0],  THREE_STATE = TRUE, TRI_I = iParHost_data_io, TRI_O = oParHost_data_io, TRI_T = oParHost_data_io_tri, IO_IF = PAP, ISVALID = (gHostIfType == 1)
-PORT coe_parHost_addressLatchEnable = "", DIR = I, IO_IF = PAP, ISVALID = (gParallelMultiplex == 1)
+PORT iParHost_addressLatchEnable = "", DIR = I, IO_IF = PAP, ISVALID = (gParallelMultiplex == 1)
 
 PORT iParHost_addressData_io = "", DIR = I, VEC =[gParallelDataWidth-1:0], IO_IF = PAP, ISVALID = (gParallelMultiplex == 1)
 PORT oParHost_addressData_io = "", DIR = O, VEC =[gParallelDataWidth-1:0], IO_IF = PAP, ISVALID = (gParallelMultiplex == 1)
 PORT oParHost_addressData_tri = "", DIR =O, IO_IF = PAP, ISVALID = (gParallelMultiplex == 1)
-PORT ioParHost_addressData_io = "", DIR = INOUT, VEC =[gParallelDataWidth-1:0], IO_IF = PAP, ISVALID = (gParallelMultiplex == 1)
+PORT ioParHost_addressData_io = "", DIR = INOUT, VEC =[gParallelDataWidth-1:0], THREE_STATE = TRUE, TRI_I = iParHost_addressData_io, TRI_O = oParHost_addressData_io, TRI_T = oParHost_addressData_tri, IO_IF = PAP, ISVALID = (gParallelMultiplex == 1)
 
 END
