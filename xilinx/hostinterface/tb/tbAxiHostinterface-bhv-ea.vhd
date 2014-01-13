@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
---! @file tb_axi_hostinterface_ip.vhd
+--! @file tbAxiHostInterface-bhv-ea.vhd
 --
 --! @brief Test bench for host iterface IP with AXI wrapper
 --
@@ -53,7 +53,7 @@ use work.global.all;
 use work.busMasterPkg.all;
 
 
-entity tb_axi_hostinterface is
+entity tbAxiHostInterface is
 generic(
     --! PCP Simulation file
     gPcpStim : string := "text.txt";
@@ -62,9 +62,9 @@ generic(
     --! Host Model 0-Parallel 1-AXI
     gHostIfModel : natural:= 0
     );
-end entity tb_axi_hostinterface ;
+end entity tbAxiHostInterface ;
 
-architecture bhv of  tb_axi_hostinterface is
+architecture bhv of  tbAxiHostInterface is
 
 constant C_AXI_ADDR_WIDTH : integer   := 32;
 constant C_AXI_DATA_WIDTH : integer   := 32;

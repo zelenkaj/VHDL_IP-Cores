@@ -25,6 +25,6 @@ lib axi_hostinterface_v1_00_a ../../../../../../common/lib/src/registerFileRtl.v
 lib axi_hostinterface_v1_00_a ../../../../../../common/lib/src/dpRam-e.vhd vhdl
 lib axi_hostinterface_v1_00_a ../../../../../../common/lib/src/global.vhd vhdl
 lib axi_hostinterface_v1_00_a ../../../../../../xilinx/lib/src/dpRam-rtl-a.vhd vhdl
-lib axi_hostinterface_v1_00_a ../../../../../axiwrapper/src/AxiliteSlaveWrapper-rtl-ea.vhd vhdl
-lib axi_hostinterface_v1_00_a ../../../../../axiwrapper/src/AxiliteMasterWrapper-rtl-ea.vhd vhdl
-lib axi_hostinterface_v1_00_a AxiHostinterface-rtl-ea.vhd vhdl
+lib axi_hostinterface_v1_00_a ../../../../../../common/axiwrapper/src/axiLiteSlaveWrapper-rtl-ea.vhd vhdl
+lib axi_hostinterface_v1_00_a ../../../../../../common/axiwrapper/src/axiLiteMasterWrapper-rtl-ea.vhd vhdl
+lib axi_hostinterface_v1_00_a ../../../../../../xilinx/hostinterface/src/axi_hostinterface-rtl-ea.vhd vhdl

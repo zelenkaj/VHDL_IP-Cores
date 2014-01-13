@@ -30,27 +30,27 @@ common/hostinterface/src/statusControlRegRtl.vhd \
 common/hostinterface/src/hostInterfaceRtl.vhd \
 common/hostinterface/src/parallelInterfaceRtl.vhd \
 xilinx/lib/src/dpRam-rtl-a.vhd \
-xilinx/axiwrapper/src/AxiliteMasterWrapper-rtl-ea.vhd \
-xilinx/axiwrapper/src/AxiliteSlaveWrapper-rtl-ea.vhd \
-xilinx/axiwrapper/tb/ParallelMaster-bhv-ea.vhd \
-xilinx/library/pcores/axi_hostinterface_vX_YY_Z/hdl/vhdl/AxiHostinterface-rtl-ea.vhd \
-xilinx/axiwrapper/tb/tbAxiHostinterfaceIp-bhv-ea.vhd \
+common/axiwrapper/src/axiLiteMasterWrapper-rtl-ea.vhd \
+common/axiwrapper/src/axiLiteSlaveWrapper-rtl-ea.vhd \
+common/util/src/parallelMaster-bhv-ea.vhd \
+xilinx/hostinterface/src/axi_hostinterface-rtl-ea.vhd \
+xilinx/hostinterface/tb/tbAxiHostinterface-bhv-ea.vhd \
 "
 
 GEN_LIST=( \
 "\
-gPcpStim=${ROOT}/xilinx/axiwrapper/tb/tbPCPMasterBhv_TB_stim.txt \
-gHostStim=${ROOT}/xilinx/axiwrapper/tb/tbHostMasterBhv_TB_stim.txt \
+gPcpStim=${ROOT}/xilinx/hostinterface/tb/tbPCPMasterBhv_TB_stim.txt \
+gHostStim=${ROOT}/xilinx/hostinterface/tb/tbHostMasterBhv_TB_stim.txt \
 gHostIfModel=0 \
 " \
 "\
-gPcpStim=${ROOT}/xilinx/axiwrapper/tb/tbPCPMasterBhv_TB_stim.txt \
-gHostStim=${ROOT}/xilinx/axiwrapper/tb/tbHostMasterBhv_TB_stim.txt \
+gPcpStim=${ROOT}/xilinx/hostinterface/tb/tbPCPMasterBhv_TB_stim.txt \
+gHostStim=${ROOT}/xilinx/hostinterface/tb/tbHostMasterBhv_TB_stim.txt \
 gHostIfModel=1 \
 " \
 )
 
-TOP_LEVEL=tb_axi_hostinterface
+TOP_LEVEL=tbAxiHostInterface
 
 CNT=0
 for i in "${GEN_LIST[@]}"
