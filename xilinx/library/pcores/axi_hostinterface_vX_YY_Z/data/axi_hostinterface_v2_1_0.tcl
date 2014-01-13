@@ -209,7 +209,7 @@ proc calc_total_memory { param_handle} {
     set RxVetQ_Size   [expr [xget_hw_parameter_value $mhsinst "Size_KB_RxVetQ"] * 1024]
     set K2UQ_Size   [expr [xget_hw_parameter_value $mhsinst "Size_KB_K2UQ"] * 1024]
     set U2KQ_Size   [expr [xget_hw_parameter_value $mhsinst "Size_KB_U2KQ"] * 1024]
-    set Tpdo_Size   [xget_hw_parameter_value $mhsinst "Size_B_Tpdo"] 
+    set Tpdo_Size   [xget_hw_parameter_value $mhsinst "Size_B_Tpdo"]
     set Rpdo_Size   [xget_hw_parameter_value $mhsinst "Size_B_Rpdo"]
     set Qheader_Size 16
     set statusControlSize 2048
@@ -223,12 +223,12 @@ proc generate {drv_handle} {
     set mhsinst [xget_hw_parent_handle $drv_handle]
     xdefine_include_file $drv_handle "xparameters.h" "axi_hostinterface" "C_BASEADDR" "C_HIGHADDR" "axi_hostinterface" "C_HOST_BASEADDR" "C_HOST_HIGHADDR" "gBaseDynBuf0" "gBaseDynBuf1" "gBaseErrCntr" "gBaseTxNmtQ" "gBaseTxGenQ" "gBaseTxSynQ" "gBaseTxVetQ" "gBaseRxVetQ" "gBaseK2UQ" "gBaseU2KQ" \
      "gBaseTpdo" "gBaseRpdo" "gBaseRes" "Conv_Size_KB_DynBuf0" "Conv_Size_KB_DynBuf1" "Conv_Size_B_ErrorCounter" "Conv_Size_KB_TxNmtQ" "Conv_Size_KB_TxGenQ" "Conv_Size_KB_TxSynQ" "Conv_Size_KB_TxVetQ" \
-     "Conv_Size_KB_RxVetQ" "Conv_Size_KB_K2UQ" "Conv_Size_KB_U2KQ" "Conv_Size_B_Tpdo" "Conv_Size_B_Rpdo" 
-     
+     "Conv_Size_KB_RxVetQ" "Conv_Size_KB_K2UQ" "Conv_Size_KB_U2KQ" "Conv_Size_B_Tpdo" "Conv_Size_B_Rpdo"
+
     my_xdefine_include_file $drv_handle "hostiflib-mem.h" "axi_hostinterface" "gBaseDynBuf0" "gBaseDynBuf1" "gBaseErrCntr" "gBaseTxNmtQ" "gBaseTxGenQ" "gBaseTxSynQ" "gBaseTxVetQ" "gBaseRxVetQ" "gBaseK2UQ" "gBaseU2KQ" \
      "gBaseTpdo" "gBaseRpdo" "gBaseRes" "Conv_Size_KB_DynBuf0" "Conv_Size_KB_DynBuf1" "Conv_Size_B_ErrorCounter" "Conv_Size_KB_TxNmtQ" "Conv_Size_KB_TxGenQ" "Conv_Size_KB_TxSynQ" "Conv_Size_KB_TxVetQ" \
-     "Conv_Size_KB_RxVetQ" "Conv_Size_KB_K2UQ" "Conv_Size_KB_U2KQ" "Conv_Size_B_Tpdo" "Conv_Size_B_Rpdo" 
-         
+     "Conv_Size_KB_RxVetQ" "Conv_Size_KB_K2UQ" "Conv_Size_KB_U2KQ" "Conv_Size_B_Tpdo" "Conv_Size_B_Rpdo"
+
 }
 
 proc my_xdefine_include_file {drv_handle file_name drv_string args} {
@@ -236,7 +236,7 @@ proc my_xdefine_include_file {drv_handle file_name drv_string args} {
     set file_handle [xopen_include_file $file_name]
 
     # Get all peripherals connected to this driver
-    set periphs [xget_periphs $drv_handle] 
+    set periphs [xget_periphs $drv_handle]
 
     # Handle special cases
     set arg "NUM_INSTANCES"
@@ -248,7 +248,7 @@ proc my_xdefine_include_file {drv_handle file_name drv_string args} {
     }
     # Check if it is a driver parameter
 
-    lappend newargs 
+    lappend newargs
     foreach arg $args {
     set value [xget_value $drv_handle "PARAMETER" $arg]
     if {[llength $value] == 0} {
@@ -272,7 +272,7 @@ proc my_xdefine_include_file {drv_handle file_name drv_string args} {
         set value [xformat_addr_string $value $arg]
         puts $file_handle "#define [my_xget_name $periph $arg] $value"
     }
-    }        
+    }
     puts $file_handle "\n/******************************************************************/\n"
     close $file_handle
 }
