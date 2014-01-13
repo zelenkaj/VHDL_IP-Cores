@@ -1,3 +1,8 @@
+--TODO: Add header
+--FIXME: Apply coding styles!
+--TODO: Check if this could also be RTL?
+--TODO: Check if this could be used in Altera Qsys also?
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -9,7 +14,7 @@ use work.global.all;
 --! use host interface package for specific types
 use work.hostInterfacePkg.all;
 
-entity parallel_master is
+entity parallelMaster is
     generic (
         --! Data bus width
         gDataWidth  : natural := 16;
@@ -62,9 +67,9 @@ port (
        iRst                        : in std_logic:= cInactivated
 
     );
-end parallel_master;
+end parallelMaster;
 
-architecture Bhv of parallel_master is
+architecture bhv of parallelMaster is
 
 type state  is (sINIT,sWRITE,sREAD,sIDLE,sSTOP);
 signal  StateCurrent    :    state      ;
@@ -319,7 +324,4 @@ end process;
 
 oAvalonReadData <= RDataM & RDataL ;
 
-end Bhv;
-
-
-
+end bhv;
