@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
---! @file axi_lite_slave_wrapperRtl.vhd
+--! @file axiLiteSlaveWrapper-rtl-ea.vhd
 --
 --! @brief AXI lite slave wrapper on avalon slave interface signals
 --
@@ -54,338 +54,308 @@ use work.global.all;
 --! provide proper inputs for a avlon interface to perform the same action
 --! initiated by axi master
 -------------------------------------------------------------------------------
-entity axi_lite_slave_wrapper is
-generic
-    (
-     --! Base Lower address for the AXI lite slave interface
-     gBaseAddr         : std_logic_vector(31 downto 0) := x"00000000";
-     --! Base Higher address for the AXI lite slave interface
-     gHighAddr         : std_logic_vector(31 downto 0) := x"0000ffff";
-     --! Address width for AXI bus interface
-     gAddrWidth : integer                       := 32;
-     --! Data width for AXI bus interface
-     gDataWidth : integer                       := 32
+entity axiLiteSlaveWrapper is
+    generic (
+        --! Base Lower address for the AXI lite slave interface
+        gBaseAddr       : std_logic_vector(31 downto 0) := x"00000000";
+        --! Base Higher address for the AXI lite slave interface
+        gHighAddr       : std_logic_vector(31 downto 0) := x"0000ffff";
+        --! Address width for AXI bus interface
+        gAddrWidth      : integer                       := 32;
+        --! Data width for AXI bus interface
+        gDataWidth      : integer                       := 32
+    );
+    port (
+        --! Global Clock for AXI
+        iAclk           : in    std_logic;
+        --! Global Reset for AXI
+        inAReset        : in    std_logic;
+        --! Address for Write Address Channel
+        iAwaddr         : in    std_logic_vector(gAddrWidth-1 downto 0);
+        --! Protection for Write Address Channel
+        iAwprot         : in    std_logic_vector(2 downto 0);
+        --! AddressValid for Write Address Channel
+        iAwvalid        : in    std_logic;
+        --! AddressReady for Write Address Channel
+        oAwready        : out   std_logic;
+        --! WriteData for Write Data Channel
+        iWdata          : in    std_logic_vector(gDataWidth-1 downto 0);
+        --! WriteStrobe for Write Data Channel
+        iWstrb          : in    std_logic_vector(gDataWidth/8-1 downto 0);
+        --! WriteValid for Write Data Channel
+        iWvalid         : in    std_logic;
+        --! WriteReady for Write Data Channel
+        oWready         : out   std_logic;
+        --! WriteResponse for Write Response Channel
+        oBresp          : out   std_logic_vector (1 downto 0);
+        --! ResponseValid for Write Response Channel
+        oBvalid         : out   std_logic;
+        --! ResponaseReady for Write Response Channel
+        iBready         : in    std_logic;
+        --! ReadAddress for Read Adddress Channel
+        iAraddr         : in    std_logic_vector(gAddrWidth-1 downto 0);
+        --! ReadAddressProtection for Read Address Channel
+        iArprot         : in    std_logic_vector(2 downto 0);
+        --! ReadAddressValid for Read Address Channel
+        iArvalid        : in    std_logic;
+        --! ReadAddressReady for Read Address Channel
+        oArready        : out   std_logic;
+        --! ReadData for Read Data Channel
+        oRdata          : out   std_logic_vector(gDataWidth-1 downto 0);
+        --! ReadResponse for Read Data Channel
+        oRresp          : out   std_logic_vector(1 downto 0);
+        --! ReadValid for Read Data Channel
+        oRvalid         : out   std_logic;
+        --! ReadReady for Read Data Channel
+        iRready         : in    std_logic;
+        --! Address to Avalon Slave Interface
+        oAvsAddress     : out   std_logic_vector(gAddrWidth-1 downto 0);
+        --! Byte Enable for Avalon Slave interface
+        oAvsByteenable  : out   std_logic_vector(gDataWidth/8-1 downto 0);
+        --! Write Data for Avalon Slave interface
+        oAvsWritedata   : out   std_logic_vector(gDataWidth-1 downto 0);
+        --! Read Data for Avalon Slave interface
+        iAvsReaddata    : in    std_logic_vector(gDataWidth-1 downto 0);
+        --! Read signal for Avalon Slave interface
+        oAvsRead        : out   std_logic;
+        --! Write signal for Avalon Slave interface
+        oAvsWrite       : out   std_logic;
+        --! WaitRequest for Avalon slave interface
+        iAvsWaitrequest : in    std_logic
+    );
+end axiLiteSlaveWrapper;
+
+architecture rtl of axiLiteSlaveWrapper is
+    --! Vinod: Add documentation
+    type tFsm is (
+        sIDLE,
+        sREAD,
+        sREAD_DONE,
+        sWRITE,
+        sWRITE_DONE,
+        sWRRES_DONE,
+        sDELAY
     );
 
-port
-    (
-    --! Global Clock for AXI
-    iAclk            :   in  std_logic                                        ;
-    --! Global Reset for AXI
-    inAReset         :   in  std_logic                                        ;
-    --! Address for Write Address Channel
-    iAwaddr    :   in  std_logic_vector (gAddrWidth -1 downto 0);
-    --! Protection for Write Address Channel
-    iAwprot    :   in  std_logic_vector ( 2 downto 0)                   ;
-    --! AddressValid for Write Address Channel
-    iAwvalid   :   in  std_logic                                        ;
-    --! AddressReady for Write Address Channel
-    oAwready   :   out std_logic                                        ;
+    --Avalon Interface designs
+    signal  address     : std_logic_vector(gAddrWidth-1 downto 0);
+    signal  chip_sel    : std_logic;
+    signal  byte_enable : std_logic_vector(gDataWidth/8-1 downto 0);
 
-    --! WriteData for Write Data Channel
-    iWdata     :   in  std_logic_vector (gDataWidth-1 downto 0) ;
-    --! WriteStrobe for Write Data Channel
-    iWstrb     :   in  std_logic_vector (gDataWidth/8-1 downto 0);
-    --! WriteValid for Write Data Channel
-    iWvalid    :   in  std_logic                                        ;
-    --! WriteReady for Write Data Channel
-    oWready    :   out std_logic                                        ;
+    --Signals for FSM
+    signal  fsm         :  tFsm;
+    signal  fsm_next    :  tFsm;
 
-    --! WriteResponse for Write Response Channel
-    oBresp     :   out std_logic_vector (1 downto 0)                    ;
-    --! ResponseValid for Write Response Channel
-    oBvalid    :   out std_logic                                        ;
-    --! ResponaseReady for Write Response Channel
-    iBready    :   in  std_logic                                        ;
+    --Internal Signals
+    signal avalonRead          : std_logic;
+    signal avalonReadDataLatch : std_logic_vector(31 downto 0);
+    signal avalonWrite         : std_logic;
 
-    --! ReadAddress for Read Adddress Channel
-    iAraddr    :   in  std_logic_vector (gAddrWidth -1 downto 0);
-    --! ReadAddressProtection for Read Address Channel
-    iArprot    :   in  std_logic_vector (2 downto 0)                    ;
-    --! ReadAddressValid for Read Address Channel
-    iArvalid   :   in  std_logic                                        ;
-    --! ReadAddressReady for Read Address Channel
-    oArready   :   out std_logic                                        ;
+    signal axiWriteData : std_logic_vector(31 downto 0);
+    signal axiDataValid : std_logic;
 
-    --! ReadData for Read Data Channel
-    oRdata     :   out std_logic_vector (gDataWidth-1 downto 0) ;
-    --! ReadResponse for Read Data Channel
-    oRresp     :   out std_logic_vector (1 downto 0)                    ;
-    --! ReadValid for Read Data Channel
-    oRvalid    :   out std_logic                                        ;
-    --! ReadReady for Read Dara Channel
-    iRready    :   in  std_logic                                        ;
-
-    --! Address to Avalon Slave Interface
-    oAvsAddress      :   out std_logic_vector (gAddrWidth-1 downto 0)  ;
-    --! Byte Enable for Avalon Slave interface
-    oAvsByteenable   :   out std_logic_vector (gDataWidth/8-1 downto 0);
-    --! Write Data for Avalon Slave interface
-    oAvsWritedata    :   out std_logic_vector (gDataWidth-1 downto 0) ;
-    --! Read Data for Avalon Slave interface
-    iAvsReaddata     :   in  std_logic_vector (gDataWidth-1 downto 0) ;
-    --! Read signal for Avalon Slave interface
-    oAvsRead         :   out std_logic          ;
-    --! Write signal for Avalon Slave interface
-    oAvsWrite        :   out std_logic          ;
-    --! WaitRequest for Avalon slave interface
-    iAvsWaitrequest  :   in  std_logic
-    );
-
-end axi_lite_slave_wrapper;
-
-architecture Rtl of axi_lite_slave_wrapper is
-
-type state is (
-                sIDLE,
-                sREAD,
-                sREAD_DONE,
-                sWRITE,
-                sWRITE_DONE,
-                sWRRES_DONE,
-                sDELAY
-                ) ;
-
-
---Avalon Interface designs
-signal  address    : std_logic_vector (gAddrWidth-1 downto 0)      ;
-signal  chip_sel   : std_logic                                             ;
-signal  byte_enable: std_logic_vector (gDataWidth/8-1 downto 0)    ;
-
---Signals for FSM
-signal  tStateCurrent   :  state     ;
-signal  tStateNext      :  state     ;
-
---Internal Signals
-signal avalonRead          : std_logic                       ;
-signal avalonReadDataLatch : std_logic_vector (31 downto 0)  ;
-signal avalonWrite         : std_logic                       ;
-
-signal axiWriteData : std_logic_vector (31 downto 0)  ;
-signal axiDataValid : std_logic                       ;
-
-signal writeStart   : std_logic ;
-signal write_sel    : std_logic;
-signal readStart    : std_logic ;
-signal read_sel     : std_logic;
-
-
+    signal writeStart   : std_logic;
+    signal write_sel    : std_logic;
+    signal readStart    : std_logic;
+    signal read_sel     : std_logic;
 begin
+    -- TODO: Check weather we need to add clock sync to make sure data & control
+    --       signal crossing should be in same clock domains
+    --
 
--- TODO: Check weather we need to add clock sync to make sure data & control
---       signal crossing should be in same clock domains
---
+    --Avalon Slave Interface Singals
+    oAvsAddress     <=  address;
+    oAvsByteenable  <=  byte_enable;
+    oAvsRead        <= avalonRead;
+    oAvsWrite       <= avalonWrite;
+    oAvsWritedata   <= axiWriteData;
 
-
---Avalon Slave Interface Singals
-oAvsAddress      <=  address             ;
-oAvsByteenable   <=  byte_enable         ;
-
-oAvsRead   <= avalonRead ;
-avalonRead <= cActivated   when (readStart = cActivated  and
-                                (tStateCurrent = sIDLE))       else
-              cActivated   when (tStateCurrent = sREAD)        else
-              cInactivated when (tStateCurrent = sREAD_DONE)  else
-              cInactivated ;
-
-oAvsWrite   <= avalonWrite ;
-avalonWrite <=  cActivated when ((tStateCurrent = sWRITE) and
-                                 (iWvalid = cActivated)) else
-                cActivated when ((tStateCurrent = sIDLE)  and
-                                 (axiDataValid = cActivated)) else
-                cActivated when (tStateCurrent = sWRITE_DONE)  else
-                cInactivated ;
-
-oAvsWritedata   <= axiWriteData ;
-axiWriteData    <= iWdata when (axiDataValid = cActivated) else
-                   axiWriteData;
+    avalonRead <=   cActivated  when readStart = cActivated and fsm = sIDLE else
+                    cActivated  when fsm = sREAD else
+                    cInactivated when fsm = sREAD_DONE else
+                    cInactivated;
 
 
--- AXI Lite Write Data Signals
+    avalonWrite <=  cActivated when fsm = sWRITE and iWvalid = cActivated else
+                    cActivated when fsm = sIDLE and axiDataValid = cActivated else
+                    cActivated when fsm = sWRITE_DONE else
+                    cInactivated;
 
-oBvalid  <= cActivated when ((tStateCurrent = sWRITE_DONE) and
-                                  (iAvsWaitrequest = cInactivated))  else
-            cActivated when ((tStateCurrent = sWRRES_DONE ))     else
-            cInactivated    ;
+    axiWriteData <= iWdata when axiDataValid = cActivated else
+                    axiWriteData;
 
-oAwready <= cActivated when ((tStateCurrent = sIDLE) and
-                             (writeStart = cActivated)) else
-            cInactivated ;
+    -- AXI Lite Write Data Signals
+    oBvalid  <= cActivated when fsm = sWRITE_DONE and iAvsWaitrequest = cInactivated else
+                cActivated when fsm = sWRRES_DONE else
+                cInactivated;
 
-oWready  <= cActivated when (tStateCurrent = sWRITE)        else
-            cActivated when ((tStateCurrent = sIDLE) and
-                              (axiDataValid = cActivated))  else
-            cInactivated ;
+    oAwready <= cActivated when fsm = sIDLE and writeStart = cActivated else
+                cInactivated;
 
--- AXI lite Read Data Signals
-oArready <= cActivated when (tStateCurrent = sIDLE and
-                            (readStart = cActivated))        else
-                   cInactivated ;
+    oWready  <= cActivated when fsm = sWRITE else
+                cActivated when fsm = sIDLE and axiDataValid = cActivated else
+                cInactivated;
 
-oRvalid  <= cActivated when ((iAvsWaitrequest = cInactivated) and
-                                  (tStateCurrent = sREAD))              else
-            cActivated when ((tStateCurrent = sREAD_DONE))         else
-            cInactivated ;
+    -- AXI lite Read Data Signals
+    oArready <= cActivated when fsm = sIDLE and readStart = cActivated else
+                cInactivated;
 
-oRdata         <= avalonReadDataLatch ;
-avalonReadDataLatch <= iAvsReaddata  when (iAvsWaitrequest = cInactivated) else
-                       avalonReadDataLatch ;
+    oRvalid  <= cActivated when iAvsWaitrequest = cInactivated and fsm = sREAD else
+                cActivated when fsm = sREAD_DONE else
+                cInactivated;
 
---TODO: Check the possibility of Error Response signals
-oBresp      <=   "00"        ;
-oRresp      <=   "00"        ;
+    oRdata <= avalonReadDataLatch;
 
--- Address Decoder
-chip_sel <= read_sel or write_sel ;
+    avalonReadDataLatch <=  iAvsReaddata  when iAvsWaitrequest = cInactivated else
+                            avalonReadDataLatch;
 
---TODO: Cleanup codes
-write_sel <= cActivated when(iAwaddr(31 downto 16) = gBaseAddr(31 downto 16)) else
-             cInactivated ;
+    --TODO: Check the possibility of Error Response signals
+    oBresp <= "00";
+    oRresp <= "00";
 
-read_sel  <= cActivated when(iAraddr(31 downto 16) = gBaseAddr(31 downto 16)) else
-             cInactivated ;
+    -- Address Decoder
+    chip_sel <= read_sel or write_sel;
 
---TODO: Revert it to Full address range to generalize the design
-address (19 downto 2) <= iAraddr (19 downto 2) when (readStart = cActivated
-                                               and (tStateCurrent = sIDLE)) else
-                         iAwaddr (19 downto 2) when (writeStart = cActivated
-                                               and (tStateCurrent = sIDLE)) else
-                         address (19 downto 2) ;
+    --TODO: Cleanup codes
+    --FIXME: Either cleanup the code or write a more meaningful "TODO"!
+    write_sel <=    cActivated when iAwaddr(31 downto 16) = gBaseAddr(31 downto 16) else
+                    cInactivated;
 
+    read_sel  <=    cActivated when iAraddr(31 downto 16) = gBaseAddr(31 downto 16) else
+                    cInactivated;
 
-writeStart   <= chip_sel and iAwvalid ;
-readStart    <= chip_sel and iArvalid ;
-axiDataValid <= iWvalid ;
+    --TODO: Revert it to Full address range to generalize the design
+    --FIXME: What about address(1 downto 0)?
+    address(19 downto 2) <= iAraddr(19 downto 2) when readStart = cActivated and fsm = sIDLE else
+                            iAwaddr(19 downto 2) when writeStart = cActivated and fsm = sIDLE else
+                            address(19 downto 2); --FIXME: This is a crazy latch! Use register for storing!!!
 
-byte_enable  <= x"F"        when (readStart = cActivated  and
-                                 (tStateCurrent = sIDLE)) else
-                iWstrb when (writeStart = cActivated and
-                                 (tStateCurrent = sIDLE)) else
-                byte_enable ;
+    writeStart      <= chip_sel and iAwvalid;
+    readStart       <= chip_sel and iArvalid;
+    axiDataValid    <= iWvalid;
 
--- Main Control FSM for converting AXI lite signals to Avalon
---TODO: Explain logic if possible with Diagram in doxygen
---! Clock Based Process for state changes
-SEQ_LOGIC_FSM:process
-       (
-          iAclk
-        )
+    byte_enable <=  x"F" when readStart = cActivated and fsm = sIDLE else
+                    iWstrb when writeStart = cActivated and fsm = sIDLE else
+                    byte_enable;
+
+    -- Main Control FSM for converting AXI lite signals to Avalon
+    --TODO: Explain logic if possible with Diagram in doxygen
+    --! Clock Based Process for state changes
+    SEQ_LOGIC_FSM : process(iAclk)
     begin
-    if(rising_edge(iAclk))  then
-        if( inAReset = cnActivated )   then
-            tStateCurrent     <= sIDLE ;
-        else
-            tStateCurrent     <= tStateNext ;
+        if rising_edge(iAclk) then
+            if inAReset = cnActivated then
+                fsm <= sIDLE;
+            else
+                fsm <= fsm_next;
+            end if;
         end if;
-    end if;
- end process;
+    end process SEQ_LOGIC_FSM;
 
---TODO: Explain logic if possible with Diagram in doxygen
---! Control based Process for state updation
-COM_LOGIC_FSM:    process
-        (
-           tStateCurrent ,
-           chip_sel     ,
-           writeStart,
-           readStart,
-           iAwvalid,
-           iArvalid,
-           iRready ,
-           iWvalid,
-           iBready,
-           iAvsWaitrequest
-        )
+    --TODO: Explain logic if possible with Diagram in doxygen
+    --! Control based Process for state updation
+    COM_LOGIC_FSM : process (
+        fsm,
+        chip_sel,
+        writeStart,
+        readStart,
+        iAwvalid,
+        iArvalid,
+        iRready,
+        iWvalid,
+        iBready,
+        iAvsWaitrequest
+        --FIXME: Incomplete sensitivity list
+    )
     begin
-    --Default values
-    tStateNext       <=  tStateCurrent    ;
+        --Default to avoid latches
+        fsm_next <= fsm;
 
-    case (tStateCurrent) is
+        case fsm is
             when sIDLE =>
-              if(chip_sel = cActivated ) then
-                   --Write Operations
-                  if(iAwvalid    =   cActivated) then
-                   if(iWvalid = cActivated) then
-                    if(iAvsWaitrequest = cInactivated) then
-                     tStateNext <= sWRRES_DONE ;
+                if chip_sel = cActivated then
+                    --Write Operations
+                    if iAwvalid = cActivated then
+                        if iWvalid = cActivated then
+                            if iAvsWaitrequest = cInactivated then
+                                fsm_next <= sWRRES_DONE;
+                            else
+                                fsm_next <= sWRITE_DONE;
+                            end if;
+                        else
+                            fsm_next <= sWRITE;
+                        end if;
+                        --Read Operations
+                    elsif iArvalid = cActivated then
+                        if iAvsWaitrequest = cInactivated then
+                            fsm_next <= sREAD_DONE;
+                        else
+                            fsm_next <= sREAD;
+                        end if;
                     else
-                     tStateNext <= sWRITE_DONE ;
+                        fsm_next <= sIDLE;
                     end if;
-                   else
-                    tStateNext <= sWRITE ;
-                   end if;
-                   --Read Operations
-                  elsif (iArvalid    =   cActivated) then
-                       if(iAvsWaitrequest = cInactivated) then
-                          tStateNext     <= sREAD_DONE ;
-                      else
-                        tStateNext     <= sREAD ;
-                      end if;
-                  else
-                   tStateNext  <= sIDLE ;
-                  end if;
-              else
-                   tStateNext <= sIDLE ;
-              end if;
+                else
+                    fsm_next <= sIDLE;
+                end if;
 
             when sREAD =>
-               -- Read Valid gets assert Here
-               if(iAvsWaitrequest = cInactivated) then
-                 if( iRready = cActivated ) then
-                  tStateNext     <= sIDLE ;
-                 else
-                  tStateNext     <= sREAD_DONE ;
-                 end if;
-              else
-                tStateNext     <= sREAD ;
-              end if;
-
-             when sREAD_DONE =>
-                if( iRready = cActivated ) then
-                 tStateNext     <= sIDLE ;
-                else
-                 tStateNext     <= sREAD_DONE ;
-                end if;
-
-             when sWRITE =>
-               if(iWvalid = cActivated ) then
-                   if(iAvsWaitrequest = cInactivated) then
-                       if(iBready = cActivated) then
-                        tStateNext     <= sIDLE ;
-                       else
-                        tStateNext     <= sWRRES_DONE ;
-                       end if;
+                -- Read Valid gets assert Here
+                if iAvsWaitrequest = cInactivated then
+                    if iRready = cActivated then
+                        fsm_next <= sIDLE;
                     else
-                        tStateNext     <= sWRITE_DONE ;
+                        fsm_next <= sREAD_DONE;
                     end if;
-               else
-                  tStateNext     <= sWRITE ;
-               end if;
-
-             when sWRITE_DONE =>
-                if(iAvsWaitrequest = cInactivated) then
-                   if(iBready = cActivated) then
-                    tStateNext     <= sIDLE ;
-                   else
-                    tStateNext     <= sWRRES_DONE ;
-                   end if;
                 else
-                    tStateNext     <= sWRITE_DONE ;
+                    fsm_next <= sREAD;
                 end if;
 
-             when sWRRES_DONE =>
-
-                if(iBready = cActivated) then
-                    tStateNext     <= sIDLE ;
+            when sREAD_DONE =>
+                if iRready = cActivated then
+                    fsm_next <= sIDLE;
                 else
-                    tStateNext     <= sWRRES_DONE ;
+                    fsm_next <= sREAD_DONE;
                 end if;
 
-              when sDELAY =>
-               tStateNext <= sIDLE ;
+            when sWRITE =>
+                if iWvalid = cActivated then
+                    if iAvsWaitrequest = cInactivated then
+                        if iBready = cActivated then
+                        fsm_next <= sIDLE;
+                        else
+                        fsm_next <= sWRRES_DONE;
+                        end if;
+                    else
+                        fsm_next <= sWRITE_DONE;
+                    end if;
+                else
+                    fsm_next <= sWRITE;
+                end if;
 
-            when others => null ;
+            when sWRITE_DONE =>
+                if iAvsWaitrequest = cInactivated then
+                    if iBready = cActivated then
+                        fsm_next <= sIDLE;
+                    else
+                        fsm_next <= sWRRES_DONE;
+                    end if;
+                else
+                    fsm_next <= sWRITE_DONE;
+                end if;
 
+            when sWRRES_DONE =>
+                if iBready = cActivated then
+                    fsm_next <= sIDLE;
+                else
+                    fsm_next <= sWRRES_DONE;
+                end if;
+
+            when sDELAY =>
+                fsm_next <= sIDLE;
+
+            when others =>
+                null;
         end case;
-    end process;
-
-end Rtl;
+    end process COM_LOGIC_FSM;
+end rtl;
