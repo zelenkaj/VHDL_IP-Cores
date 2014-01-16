@@ -41,6 +41,10 @@
 --    POSSIBILITY OF SUCH DAMAGE.
 --
 -------------------------------------------------------------------------------
+-- Version History
+-------------------------------------------------------------------------------
+-- 2014-01-13   Vinod PA    Added AXI-Lite warpper for Avalon Slave
+-------------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -215,20 +219,17 @@ begin
 
     -- Address Decoder
     chip_sel <= read_sel or write_sel;
-
-    --TODO: Cleanup codes
-    --FIXME: Either cleanup the code or write a more meaningful "TODO"!
+    -- 64Kbyte address range only supported so MSB 16 bits enough for Decoding
     write_sel <=    cActivated when iAwaddr(31 downto 16) = gBaseAddr(31 downto 16) else
                     cInactivated;
 
     read_sel  <=    cActivated when iAraddr(31 downto 16) = gBaseAddr(31 downto 16) else
                     cInactivated;
 
-    --TODO: Revert it to Full address range to generalize the design
-    --FIXME: What about address(1 downto 0)?
-    address(19 downto 2) <= iAraddr(19 downto 2) when readStart = cActivated and fsm = sIDLE else
-                            iAwaddr(19 downto 2) when writeStart = cActivated and fsm = sIDLE else
-                            address(19 downto 2); --FIXME: This is a crazy latch! Use register for storing!!!
+    -- TODO: Check possibilities of reduce the no of bits in MUX/latch design
+    address <= iAraddr when readStart = cActivated and fsm = sIDLE else
+               iAwaddr when writeStart = cActivated and fsm = sIDLE else
+               address ; --FIXME: This is a crazy latch! Use register for storing!!!
 
     writeStart      <= chip_sel and iAwvalid;
     readStart       <= chip_sel and iArvalid;
@@ -265,7 +266,6 @@ begin
         iWvalid,
         iBready,
         iAvsWaitrequest
-        --FIXME: Incomplete sensitivity list
     )
     begin
         --Default to avoid latches

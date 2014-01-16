@@ -40,6 +40,10 @@
 --    POSSIBILITY OF SUCH DAMAGE.
 --
 -------------------------------------------------------------------------------
+-- -- Version History
+-------------------------------------------------------------------------------
+-- 2014-01-13   Vinod PA    initial Draft for Top file
+-------------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -285,22 +289,33 @@ entity axi_hostinterface is
         oParHost_addressData_tri    : out   std_logic
     );
 
-    --TODO: Add description
+    --! Declare Maximum Fan out attribute
     attribute MAX_FANOUT : string;
-    attribute SIGIS : string;
+    --! Declare Class of special signals
+    attribute SIGIS      : string;
+    --! Maximum fan out for PCP clock
     attribute MAX_FANOUT of S_AXI_PCP_ACLK     : signal is "10000";
+    --! Maximum fan out for PCP Reset
     attribute MAX_FANOUT of S_AXI_PCP_ARESETN  : signal is "10000";
+    --! PCP clock is declared under clock group
     attribute SIGIS of S_AXI_PCP_ACLK          : signal is "Clk"  ;
+    --! PCP Reset is declared under Reset group
     attribute SIGIS of S_AXI_PCP_ARESETN       : signal is "Rst"  ;
-
+    --! Maximum fan out for Host clock
     attribute MAX_FANOUT of S_AXI_HOST_ACLK    : signal is "10000";
+    --! Maximum fan out for Host Reset
     attribute MAX_FANOUT of S_AXI_HOST_ARESETN : signal is "10000";
+    --! Host clock is declared under clock group
     attribute SIGIS of S_AXI_HOST_ACLK         : signal is "Clk"  ;
+    --! Host Reset is declared under Reset group
     attribute SIGIS of S_AXI_HOST_ARESETN      : signal is "Rst"  ;
-
+    --! Maximum fan out for Bridge clock
     attribute MAX_FANOUT of M_AXI_ACLK         : signal is "10000";
+    --! Maximum fan out for Bridge Reset
     attribute MAX_FANOUT of M_AXI_ARESETN      : signal is "10000";
+    --! Bridge clock is declared under clock group
     attribute SIGIS of M_AXI_ACLK              : signal is "Clk"  ;
+    --! Bridge Reset is declared under Reset group
     attribute SIGIS of M_AXI_ARESETN           : signal is "Rst"  ;
 end entity axi_hostinterface;
 
