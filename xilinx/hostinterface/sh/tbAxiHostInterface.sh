@@ -43,11 +43,6 @@ gPcpStim=${ROOT}/xilinx/hostinterface/tb/tbPCPMasterBhv_TB_stim.txt \
 gHostStim=${ROOT}/xilinx/hostinterface/tb/tbHostMasterBhv_TB_stim.txt \
 gHostIfModel=0 \
 " \
-"\
-gPcpStim=${ROOT}/xilinx/hostinterface/tb/tbPCPMasterBhv_TB_stim.txt \
-gHostStim=${ROOT}/xilinx/hostinterface/tb/tbHostMasterBhv_TB_stim.txt \
-gHostIfModel=1 \
-" \
 )
 
 TOP_LEVEL=tbAxiHostInterface
