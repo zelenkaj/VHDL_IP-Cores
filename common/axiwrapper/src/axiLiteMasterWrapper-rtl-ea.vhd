@@ -41,6 +41,10 @@
 --    POSSIBILITY OF SUCH DAMAGE.
 --
 -------------------------------------------------------------------------------
+-- Version History
+-------------------------------------------------------------------------------
+-- 2014-01-13   Vinod PA    Added AXI-Lite warpper for Avalon master
+-------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 library work;
@@ -151,8 +155,6 @@ architecture rtl of axiLiteMasterWrapper is
     signal readOp_done      : std_logic ;
     signal readData         : std_logic_vector(31 downto 0);
 begin
-    --TODO: Check weather we need to add clock sync circuits to make sure clock
-    --      crossing domain are in Sync
 
     --AXI Master Signals
     oAwprot <= "000";
@@ -160,15 +162,10 @@ begin
     oAwaddr <= iAvalonAddr;
     oAraddr <= iAvalonAddr;
     oWdata  <= iAvalonWriteData;
-    oWstrb  <= iAvalonBE; --TODO: Check if be during read does no confusion!
+    -- Only read or write at a time and Read will always 32bit
+    oWstrb  <= iAvalonBE;
 
-    --TODO: Check...
-    -- * Is this long comment necessary?
-    -- * Is it a bug in Xilinx AXI implementation?
-    -- * What if oWlast <= cInactivated ?
-    -- WLAST is needed for communicating with External Meomory which is AXI4.
-    -- Since there is no burst operations in AXI lite interface, WLAST will be 1
-    -- for all 32bit write operations
+    -- Memory operations (AXI4) demands presence of WLAST (active for last data)
     oWlast  <=  cActivated;
 
     oAwvalid <= cActivated when fsm = sINIT and iAvalonWrite = cActivated else
