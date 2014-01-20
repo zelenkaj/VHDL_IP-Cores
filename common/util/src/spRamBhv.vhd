@@ -85,8 +85,6 @@ architecture bhv of spRam is
     type tMemory is array (cMemorySize-1 downto 0) of std_logic_vector(gDataWidth-1 downto 0);
     --! Memory initialization constant
     constant cMemoryInit    : tMemory := (others => (others => cInactivated));
-    --! The memory
-    signal memory           : tMemory;
 
     --! The write acknowlegde internal
     signal writeAck : std_logic;
@@ -98,24 +96,28 @@ begin
     ---------------------------------------------------------------------------
     oAck <= writeAck or readAck;
 
+    --! This is the memory process. It uses the memory as variable to save
+    --! simulator resources.
     theMemoryProc : process(iRst, iClk)
-        variable vAddr_tmp : natural := 0;
+        variable vAddr_tmp  : natural := 0;
+        --! The memory
+        variable vMemory    : tMemory;
     begin
         if iRst = cActivated then
             -- initialize memory to init vector
-            memory <= cMemoryInit;
+            vMemory := cMemoryInit;
         elsif rising_edge(iClk) then
             vAddr_tmp := to_integer(unsigned(iAddress));
             if iWrite = cActivated then
                 for i in iByteenable'range loop
                     if iByteenable(i) = cActivated then
-                        memory(vAddr_tmp)((i+1)*cByteLength-1 downto i*cByteLength) <= iWritedata((i+1)*cByteLength-1 downto i*cByteLength);
+                        vMemory(vAddr_tmp)((i+1)*cByteLength-1 downto i*cByteLength) := iWritedata((i+1)*cByteLength-1 downto i*cByteLength);
                     end if;
                 end loop;
             end if;
 
             if iRead = cActivated then
-                oReaddata <= memory(vAddr_tmp);
+                oReaddata <= vMemory(vAddr_tmp);
             else
                 oReaddata <= (others => cInactivated);
             end if;
