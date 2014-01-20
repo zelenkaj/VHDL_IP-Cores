@@ -1,0 +1,18 @@
+{ "signal" : [
+    { "name": "clk",                                "wave": "p..Pp.|.Pp..|.P" },
+    [ "AXI Master",     { "name": "AW-VALID",       "wave": "01.01.|.0.1.|.0", "node": ".a..d.....h..." },
+                        { "name": "AW-ADDR",        "wave": "x3.x4.|.x.5.|.x", "data": ["A0","A1","A2"] },
+                        { "name": "W-VALID",        "wave": "01.01.|.01..|.0", "node": ".b..e....g...." },
+                        { "name": "B-READY",        "wave": "01.01.|.01..|.0" },
+                        { "name": "W-DATA",         "wave": "x3.x4.|.x5..|.x", "data": ["D0","D1","D2"] },
+    ],[ "AXI Slave",    { "name": "AW-READY",       "wave": "0.10..|10...|10" },
+                        { "name": "W-READY",        "wave": "0.10..|10...|10" },
+                        { "name": "B-VALID",        "wave": "0.10..|10...|10" },
+    ],[ "Avalon Slave", { "name": "write",          "wave": "0.10.1|.0..1|.0", "node": "..c..f.....i.." },
+                        { "name": "address",        "wave": "x.3x.4|.x..5|.x", "data": ["A0","A1","A2"] },
+                        { "name": "writedata",      "wave": "x.3x.4|.x..5|.x", "data": ["D0","D1","D2"] },
+                        { "name": "waitrequest",    "wave": "1.01..|01...|01" },
+    ]
+],
+    "edge": ["a~>c","b~>c","d~>f","e~>f","g~>i","h~>i"]
+}

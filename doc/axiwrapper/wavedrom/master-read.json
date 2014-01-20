@@ -1,0 +1,14 @@
+{ "signal" : [
+    { "name": "clk",                                "wave": "p......|.." },
+    [ "Avalon Master",  { "name": "read",           "wave": "01.01..|.0" },
+                        { "name": "address",        "wave": "x3.x4..|.x", "data": ["A0","A1"] },
+                        { "name": "readdata",       "wave": "x.3x...|4x", "data": ["D0","D1"] },
+                        { "name": "waitrequest",    "wave": "1.01...|01" },
+    ],[ "AXI Master",   { "name": "AR-VALID",       "wave": "010.1.0|.." },
+                        { "name": "AR-ADDR",        "wave": "x3x.4.x|..", "data": ["A0","A1"] },
+                        { "name": "R-READY",        "wave": "01.01..|.0" },
+    ],[ "AXI Slave",    { "name": "AR-READY",       "wave": "1.0..10|.." },
+                        { "name": "R-VALID",        "wave": "0.10...|10" },
+                        { "name": "R-DATA",         "wave": "x.3x...|4x", "data": ["D0","D1"] },
+    ]
+]}
