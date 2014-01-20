@@ -1,0 +1,14 @@
+#!/bin/bash
+# Settings file for running simulation.
+
+STIM_FILE="gStim=common/hostinterface/tb/tbDynamicBridgeBhv-stim.txt"
+
+SRC_LIST="\
+common/axiwrapper/src/axiLiteMasterWrapper-rtl-ea.vhd \
+common/axiwrapper/src/axiLiteSlaveWrapper-rtl-ea.vhd \
+common/axiwrapper/tb/tbAxiLiteSlaveWrapper-bhv-ea.vhd \
+"
+
+GEN_LIST=("gMasterStim=common/axiwrapper/tb/tbMasterBhv_TB_stim.txt")
+
+TOP_LEVEL=tbAxiLiteSlaveWrapper
