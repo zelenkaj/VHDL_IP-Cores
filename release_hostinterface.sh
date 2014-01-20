@@ -1,13 +1,19 @@
 #!/bin/bash
-# ./release_hostinterface.sh RELEASE_DIR
-# e.g.: $ ./release_hostinterface.sh release
+# ./release_hostinterface.sh RELEASE_DIR IP_VERSION
+# e.g.: $ ./release_hostinterface.sh release v1_00_a
 
 DIR_RELEASE=$1
+IP_VERSION=$2
 DIR_DOC=doc/hostinterface
 
 if [ -z "${DIR_RELEASE}" ];
 then
     DIR_RELEASE=release
+fi
+
+if [ -z "${IP_VERSION}" ];
+then
+    IP_VERSION=v1_00_a
 fi
 
 # create dir structure
@@ -38,7 +44,7 @@ cp --parents ${DIR_DOC}/Doxyfile                                    ${DIR_RELEAS
 cp --parents ${DIR_DOC}/mainpage.txt                                ${DIR_RELEASE}
 
 # copy Altera host interface
-echo "copy altera powerlink ipcore..."
+echo "copy altera ipcore..."
 cp --parents altera/components/hostinterface_hw.tcl                 ${DIR_RELEASE}
 cp --parents altera/components/hostinterface_sw.tcl                 ${DIR_RELEASE}
 cp --parents altera/components/img/br.png                           ${DIR_RELEASE}
@@ -53,6 +59,30 @@ cp --parents common/hostinterface/src/irqGenRtl.vhd                 ${DIR_RELEAS
 cp --parents common/hostinterface/src/dynamicBridgeRtl.vhd          ${DIR_RELEASE}
 cp --parents common/hostinterface/src/statusControlRegRtl.vhd       ${DIR_RELEASE}
 cp --parents common/hostinterface/src/parallelInterfaceRtl.vhd      ${DIR_RELEASE}
+
+# copy Xilinx host interface
+echo "copy xilinx ipcore..."
+mkdir -p ${DIR_RELEASE}/xilinx/components/pcores/axi_hostinterface_${IP_VERSION}/data
+
+cp xilinx/components/pcores/axi_hostinterface_vX_YY_Z/data/axi_hostinterface_v2_1_0.mdd  ${DIR_RELEASE}/xilinx/components/pcores/axi_hostinterface_${IP_VERSION}/data
+cp xilinx/components/pcores/axi_hostinterface_vX_YY_Z/data/axi_hostinterface_v2_1_0.mpd  ${DIR_RELEASE}/xilinx/components/pcores/axi_hostinterface_${IP_VERSION}/data
+cp xilinx/components/pcores/axi_hostinterface_vX_YY_Z/data/axi_hostinterface_v2_1_0.pao  ${DIR_RELEASE}/xilinx/components/pcores/axi_hostinterface_${IP_VERSION}/data
+cp xilinx/components/pcores/axi_hostinterface_vX_YY_Z/data/axi_hostinterface_v2_1_0.tcl  ${DIR_RELEASE}/xilinx/components/pcores/axi_hostinterface_${IP_VERSION}/data
+cp xilinx/components/pcores/axi_hostinterface_vX_YY_Z/data/axi_hostinterface_v2_1_0.mui  ${DIR_RELEASE}/xilinx/components/pcores/axi_hostinterface_${IP_VERSION}/data
+
+cp --parents xilinx/memory/src/dpRam-rtl-a.vhd                      ${DIR_RELEASE}
+cp --parents common/memory/src/dpRam-e.vhd                          ${DIR_RELEASE}
+cp --parents xilinx/hostinterface/src/axi_hostinterface-rtl-ea.vhd  ${DIR_RELEASE}
+cp --parents common/hostinterface/src/hostInterfacePkg.vhd          ${DIR_RELEASE}
+cp --parents common/hostinterface/src/hostInterfaceRtl.vhd          ${DIR_RELEASE}
+cp --parents common/hostinterface/src/irqGenRtl.vhd                 ${DIR_RELEASE}
+cp --parents common/hostinterface/src/dynamicBridgeRtl.vhd          ${DIR_RELEASE}
+cp --parents common/hostinterface/src/statusControlRegRtl.vhd       ${DIR_RELEASE}
+cp --parents common/hostinterface/src/parallelInterfaceRtl.vhd      ${DIR_RELEASE}
+
+cp --parents common/axiwrapper/src/axiLiteSlaveWrapper-rtl-ea.vhd   ${DIR_RELEASE}
+cp --parents common/axiwrapper/src/axiLiteMasterWrapper-rtl-ea.vhd  ${DIR_RELEASE}
+
 
 # create revision.txt
 REV_FILE=${DIR_RELEASE}/${DIR_DOC}/revision.md
