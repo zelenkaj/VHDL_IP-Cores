@@ -1,0 +1,92 @@
+#status control register tb
+# PCP
+# Memory Address Range is from 0x30000000 0x3000FFFF
+# Becuase of the limitation in AXI lite (64KB)
+##MY Test Codes
+WR d 7c000000 DEADBEEF
+WR d 7c000004 DEADBEEF
+WR d 7c000008 DEADBEEF
+WR d 7c000008 DEADBEEF
+ASS d 7c000008 DEADBEEF
+## Tests for Byte operations for host Interface IP control register
+WR  d 7c000008 AAAAAAAA
+WR  b 7c000008 00000001
+ASS b 7c000008 00000001
+ASS d 7c000008 AAAAAA01
+WR  w 7c000008 00000202
+ASS w 7c000008 00000202
+WR  w 7c00000A 00000303
+ASS w 7c00000A 00000303
+ASS d 7c000008 03030202
+
+WR  d 7c000008 04040404
+ASS d 7c000008 04040404
+##
+WR d 7c00000C DEADBEEF
+WR d 7c000010 DEADBEEF
+WR d 7c000014 DEADBEEF
+WR d 7c000018 DEADBEEF
+WR d 7c00001C DEADBEEF
+WR d 7c000020 DEADBEEF
+WR d 7c000024 DEADBEEF
+#check magic
+ASS d 7c000000 504C4B00
+#read version
+ASS d 7c000004 FFFFFF00
+#check node id for F0
+ASS b 7c00020C 000000F0
+#wait for command
+WAIT w 7c000204 00000001
+###############################################
+##PCP is Writing Addresses - Host is on Wait
+
+#set led (but PCP has only R0!)
+WR w 7c000210 xxxx0003
+#set error counter base
+WR  d 7c000400 30001000
+ASS d 7c000400 30001000
+#set tx nmt base
+WR  d 7c000404 30002000
+ASS d 7c000404 30002000
+#set tx gen base
+WR  d 7c000408 30003000
+ASS d 7c000408 30003000
+#set tx sync base
+WR  d 7c00040C 30004000
+ASS d 7c00040C 30004000
+#set tx veth base
+WR  d 7c000410 30005000
+ASS d 7c000410 30005000
+#set rx veth base
+WR  d 7c000414 30006000
+ASS d 7c000414 30006000
+#set k2u base
+WR  d 7c000418 30007000
+ASS d 7c000418 30007000
+#set u2k base
+WR  d 7c00041C 30008000
+ASS d 7c00041C 30008000
+#set pdo base
+WR  d 7c000420 30009000
+ASS d 7c000420 30009000
+#enable bridge
+WR  w 7c000200 00000001
+#enable all irq sources
+WR  w 7c000300 0000000F
+#set state
+WR  w 7c000206 00000001
+
+#############################################
+## Host application is running PCP has to wait
+#wait for command
+WAIT w 7c000204 00000002
+#############################################
+#set some irq
+WR w 7c000306 00000002
+#set Command
+WR w 7c000206 00000002
+#wait for command
+WAIT w 7c000204 00000003
+###############END OF TESTS#################
+NOP
+FIN
