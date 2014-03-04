@@ -321,13 +321,16 @@ begin
     oBaseSetWrite   <= pcpBaseSetWrite or hostBaseSetWrite;
     oBaseSetRead    <= pcpBaseSetRead or hostBaseSetRead;
 
+    --TODO: Recheck sensitivity list
     --! register access
     regAcc : process (
         iHostWrite,
+        iHostRead,
         iHostByteenable,
         iHostAddress,
         iHostWritedata,
         iPcpWrite,
+        iPcpRead,
         iPcpByteenable,
         iPcpAddress,
         iPcpWritedata,
@@ -481,8 +484,13 @@ begin
                     if iHostWrite = cActivated then
                         hostBaseSetData     <= iHostWritedata(hostBaseSetData'range);
                         hostBaseSetWrite    <= cActivated;
-                    else
+                        hostBaseSetRead     <= cInactivated;
+                    elsif iHostRead = cActivated then
                         hostBaseSetRead     <= cActivated;
+                        hostBaseSetWrite    <= cInactivated;
+                    else
+                        hostBaseSetWrite    <= cInactivated;
+                        hostBaseSetRead     <= cInactivated;
                     end if;
                 end if;
 
@@ -615,8 +623,13 @@ begin
                     if iPcpWrite = cActivated then
                         pcpBaseSetData  <= iPcpWritedata(pcpBaseSetData'range);
                         pcpBaseSetWrite <= cActivated;
-                    else
+                        pcpBaseSetRead <= cInactivated;
+                    elsif iPcpRead = cActivated then
                         pcpBaseSetRead <= cActivated;
+                        pcpBaseSetWrite <= cInactivated;
+                    else
+                        pcpBaseSetRead <= cInactivated;
+                        pcpBaseSetWrite <= cInactivated;
                     end if;
                 end if;
 
