@@ -209,23 +209,14 @@ set_parameter_property  gBaseU2KQ           AFFECTS_ELABORATION FALSE
 set_parameter_property  gBaseU2KQ           VISIBLE             FALSE
 set_parameter_property  gBaseU2KQ           DISPLAY_HINT        "HEXADECIMAL"
 
-add_parameter           gBaseTpdo           NATURAL             45056
-set_parameter_property  gBaseTpdo           DEFAULT_VALUE       45056
-set_parameter_property  gBaseTpdo           TYPE                NATURAL
-set_parameter_property  gBaseTpdo           DERIVED             TRUE
-set_parameter_property  gBaseTpdo           HDL_PARAMETER       TRUE
-set_parameter_property  gBaseTpdo           AFFECTS_ELABORATION FALSE
-set_parameter_property  gBaseTpdo           VISIBLE             FALSE
-set_parameter_property  gBaseTpdo           DISPLAY_HINT        "HEXADECIMAL"
-
-add_parameter           gBaseRpdo           NATURAL             57344
-set_parameter_property  gBaseRpdo           DEFAULT_VALUE       57344
-set_parameter_property  gBaseRpdo           TYPE                NATURAL
-set_parameter_property  gBaseRpdo           DERIVED             TRUE
-set_parameter_property  gBaseRpdo           HDL_PARAMETER       TRUE
-set_parameter_property  gBaseRpdo           AFFECTS_ELABORATION FALSE
-set_parameter_property  gBaseRpdo           VISIBLE             FALSE
-set_parameter_property  gBaseRpdo           DISPLAY_HINT        "HEXADECIMAL"
+add_parameter           gBasePdo            NATURAL             45056
+set_parameter_property  gBasePdo            DEFAULT_VALUE       45056
+set_parameter_property  gBasePdo            TYPE                NATURAL
+set_parameter_property  gBasePdo            DERIVED             TRUE
+set_parameter_property  gBasePdo            HDL_PARAMETER       TRUE
+set_parameter_property  gBasePdo            AFFECTS_ELABORATION FALSE
+set_parameter_property  gBasePdo            VISIBLE             FALSE
+set_parameter_property  gBasePdo            DISPLAY_HINT        "HEXADECIMAL"
 
 add_parameter           gBaseRes            NATURAL             81920
 set_parameter_property  gBaseRes            DEFAULT_VALUE       81920
@@ -367,17 +358,11 @@ set_parameter_property  gui_sizeU2KQ        DISPLAY_NAME        "User-to-Kernel 
 set_parameter_property  gui_sizeU2KQ        UNITS               "Kilobytes"
 set_parameter_property  gui_sizeU2KQ        ALLOWED_RANGES      {1 2 4 8 16 32 64}
 
-add_parameter           gui_sizeTpdo        NATURAL             12288
-set_parameter_property  gui_sizeTpdo        DEFAULT_VALUE       12288
-set_parameter_property  gui_sizeTpdo        TYPE                NATURAL
-set_parameter_property  gui_sizeTpdo        DISPLAY_NAME        "Transmit Process Data Objects (TPDO)"
-set_parameter_property  gui_sizeTpdo        UNITS               "Bytes"
-
-add_parameter           gui_sizeRpdo        NATURAL             24576
-set_parameter_property  gui_sizeRpdo        DEFAULT_VALUE       24576
-set_parameter_property  gui_sizeRpdo        TYPE                NATURAL
-set_parameter_property  gui_sizeRpdo        DISPLAY_NAME        "Receive Process Data Objects (RPDO)"
-set_parameter_property  gui_sizeRpdo        UNITS               "Bytes"
+add_parameter           gui_sizePdo         NATURAL             36864
+set_parameter_property  gui_sizePdo         DEFAULT_VALUE       36864
+set_parameter_property  gui_sizePdo         TYPE                NATURAL
+set_parameter_property  gui_sizePdo         DISPLAY_NAME        "Transmit Process Data Objects (TPDO)"
+set_parameter_property  gui_sizePdo         UNITS               "Bytes"
 
 add_parameter           gui_sizeTotal       NATURAL             49152
 set_parameter_property  gui_sizeTotal       DEFAULT_VALUE       49152
@@ -420,8 +405,7 @@ add_display_item        "Queues"            gui_sizeTxVethQ     PARAMETER
 add_display_item        "Queues"            gui_sizeRxVethQ     PARAMETER
 add_display_item        "Queues"            gui_sizeK2UQ        PARAMETER
 add_display_item        "Queues"            gui_sizeU2KQ        PARAMETER
-add_display_item        "Pdo"               gui_sizeTpdo        PARAMETER
-add_display_item        "Pdo"               gui_sizeRpdo        PARAMETER
+add_display_item        "Pdo"               gui_sizePdo         PARAMETER
 
 add_display_item        "" "Information"                        GROUP TAB
 add_display_item        "Information"       "Memory Map"        GROUP
@@ -560,12 +544,12 @@ proc generate_version {} {
 }
 
 proc generate_memory_mapping {} {
-    set listSizeGuiParam [list "gui_sizeDynBuf0" "gui_sizeDynBuf1" "gui_sizeErrorCnter" "gui_sizeTxNmtQ" "gui_sizeTxGenQ" "gui_sizeTxSyncQ" "gui_sizeTxVethQ" "gui_sizeRxVethQ" "gui_sizeK2UQ" "gui_sizeU2KQ" "gui_sizeTpdo" "gui_sizeRpdo"]
+    set listSizeGuiParam [list "gui_sizeDynBuf0" "gui_sizeDynBuf1" "gui_sizeErrorCnter" "gui_sizeTxNmtQ" "gui_sizeTxGenQ" "gui_sizeTxSyncQ" "gui_sizeTxVethQ" "gui_sizeRxVethQ" "gui_sizeK2UQ" "gui_sizeU2KQ" "gui_sizePdo"]
     set queueHeaderSize 16
     set listSizeGuiHeaders [list 0 0 0 $queueHeaderSize $queueHeaderSize $queueHeaderSize $queueHeaderSize $queueHeaderSize $queueHeaderSize $queueHeaderSize 0 0]
-    set listSizeCmacro [list "SIZE_DYNBUF0" "SIZE_DYNBUF1" "SIZE_ERRORCOUNTER" "SIZE_TXNMTQ" "SIZE_TXGENQ" "SIZE_TXSYNCQ" "SIZE_TXVETHQ" "SIZE_RXVETHQ" "SIZE_K2UQ" "SIZE_U2KQ" "SIZE_TPDO" "SIZE_RPDO"]
-    set listBaseCmacro [list "BASE_DYNBUF0" "BASE_DYNBUF1" "BASE_ERRORCOUNTER" "BASE_TXNMTQ" "BASE_TXGENQ" "BASE_TXSYNCQ" "BASE_TXVETHQ" "BASE_RXVETHQ" "BASE_K2UQ" "BASE_U2KQ" "BASE_TPDO" "BASE_RPDO"]
-    set listBaseParam [list "gBaseDynBuf0" "gBaseDynBuf1" "gBaseErrCntr" "gBaseTxNmtQ" "gBaseTxGenQ" "gBaseTxSynQ" "gBaseTxVetQ" "gBaseRxVetQ" "gBaseK2UQ" "gBaseU2KQ" "gBaseTpdo" "gBaseRpdo" "gBaseRes"]
+    set listSizeCmacro [list "SIZE_DYNBUF0" "SIZE_DYNBUF1" "SIZE_ERRORCOUNTER" "SIZE_TXNMTQ" "SIZE_TXGENQ" "SIZE_TXSYNCQ" "SIZE_TXVETHQ" "SIZE_RXVETHQ" "SIZE_K2UQ" "SIZE_U2KQ" "SIZE_PDO"]
+    set listBaseCmacro [list "BASE_DYNBUF0" "BASE_DYNBUF1" "BASE_ERRORCOUNTER" "BASE_TXNMTQ" "BASE_TXGENQ" "BASE_TXSYNCQ" "BASE_TXVETHQ" "BASE_RXVETHQ" "BASE_K2UQ" "BASE_U2KQ" "BASE_PDO"]
+    set listBaseParam [list "gBaseDynBuf0" "gBaseDynBuf1" "gBaseErrCntr" "gBaseTxNmtQ" "gBaseTxGenQ" "gBaseTxSynQ" "gBaseTxVetQ" "gBaseRxVetQ" "gBaseK2UQ" "gBaseU2KQ" "gBasePdo" "gBaseRes"]
     set statusControlBase 0
     set statusControlSize 2048
     set memorySpanKb 128
