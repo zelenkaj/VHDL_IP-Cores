@@ -121,7 +121,7 @@ proc calc_baseadr_U2KQ { param_handle} {
      return $Updated_Addr
 }
 
-proc calc_baseadr_Tpdo { param_handle} {
+proc calc_baseadr_Pdo { param_handle} {
      set mhsinst      [xget_hw_parent_handle $param_handle]
      set Base_Addr   [xget_hw_parameter_value $mhsinst "gBaseU2KQ"]
      set User_Size   [xget_hw_parameter_value $mhsinst "Size_KB_U2KQ"]
@@ -130,19 +130,10 @@ proc calc_baseadr_Tpdo { param_handle} {
      return $Updated_Addr
 }
 
-proc calc_baseadr_Rpdo { param_handle} {
-     set mhsinst      [xget_hw_parent_handle $param_handle]
-     set Base_Addr   [xget_hw_parameter_value $mhsinst "gBaseTpdo"]
-     set User_Size   [xget_hw_parameter_value $mhsinst "Size_B_Tpdo"]
-     set Incr_Addr_Size [format 0x%x $User_Size ]
-     set Updated_Addr [format 0x%x [expr $Base_Addr + $Incr_Addr_Size]]
-     return $Updated_Addr
-}
-
 proc calc_baseadr_Res { param_handle} {
      set mhsinst      [xget_hw_parent_handle $param_handle]
-     set Base_Addr   [xget_hw_parameter_value $mhsinst "gBaseRpdo"]
-     set User_Size   [xget_hw_parameter_value $mhsinst "Size_B_Rpdo"]
+     set Base_Addr   [xget_hw_parameter_value $mhsinst "gBasePdo"]
+     set User_Size   [xget_hw_parameter_value $mhsinst "Size_B_Pdo"]
      set Incr_Addr_Size [format 0x%x $User_Size ]
      set Updated_Addr [format 0x%x [expr $Base_Addr + $Incr_Addr_Size]]
      return $Updated_Addr
@@ -219,16 +210,9 @@ proc calc_size_U2KQ {param_handle} {
      return $Updated_Size
 }
 
-proc calc_size_Tpdo {param_handle} {
+proc calc_size_Pdo {param_handle} {
      set mhsinst      [xget_hw_parent_handle $param_handle]
-     set Size   [xget_hw_parameter_value $mhsinst "Size_B_Tpdo"]
-     set Updated_Size [expr $Size * 1]
-     return $Updated_Size
-}
-
-proc calc_size_Rpdo {param_handle} {
-     set mhsinst      [xget_hw_parent_handle $param_handle]
-     set Size   [xget_hw_parameter_value $mhsinst "Size_B_Rpdo"]
+     set Size   [xget_hw_parameter_value $mhsinst "Size_B_Pdo"]
      set Updated_Size [expr $Size * 1]
      return $Updated_Size
 }
@@ -237,7 +221,7 @@ proc calc_size_Rpdo {param_handle} {
 
 proc calc_total_memory { param_handle} {
      set mhsinst      [xget_hw_parent_handle $param_handle]
-     set listGuiParam [list "Size_KB_DynBuf0" "Size_KB_DynBuf1" "Size_B_ErrorCounter" "Size_KB_TxNmtQ" "Size_KB_TxGenQ" "Size_KB_TxSynQ" "Size_KB_TxVetQ" "Size_KB_RxVetQ" "Size_KB_K2UQ" "Size_KB_U2KQ" "Size_B_Tpdo" "Size_B_Rpdo"]
+     set listGuiParam [list "Size_KB_DynBuf0" "Size_KB_DynBuf1" "Size_B_ErrorCounter" "Size_KB_TxNmtQ" "Size_KB_TxGenQ" "Size_KB_TxSynQ" "Size_KB_TxVetQ" "Size_KB_RxVetQ" "Size_KB_K2UQ" "Size_KB_U2KQ" "Size_B_Pdo"]
      set DynBuf0_Size  [expr [xget_hw_parameter_value $mhsinst "Size_KB_DynBuf0"] * 1024]
      set DynBuf1_Size  [expr [xget_hw_parameter_value $mhsinst "Size_KB_DynBuf1"] *1024]
      set Errcntr_Size  [xget_hw_parameter_value $mhsinst "Size_B_ErrorCounter"]
@@ -248,11 +232,10 @@ proc calc_total_memory { param_handle} {
      set RxVetQ_Size   [expr [xget_hw_parameter_value $mhsinst "Size_KB_RxVetQ"] * 1024]
      set K2UQ_Size   [expr [xget_hw_parameter_value $mhsinst "Size_KB_K2UQ"] * 1024]
      set U2KQ_Size   [expr [xget_hw_parameter_value $mhsinst "Size_KB_U2KQ"] * 1024]
-     set Tpdo_Size   [xget_hw_parameter_value $mhsinst "Size_B_Tpdo"]
-     set Rpdo_Size   [xget_hw_parameter_value $mhsinst "Size_B_Rpdo"]
+     set Pdo_Size   [xget_hw_parameter_value $mhsinst "Size_B_Pdo"]
      set Qheader_Size 16
      set statusControlSize 2048
-     set accumulator [expr $DynBuf0_Size + $DynBuf1_Size + $Errcntr_Size + $TxNmtQ_Size + $TxGenQ_Size + $TxSynQ_Size + $TxVetQ_Size + $RxVetQ_Size + $K2UQ_Size + $U2KQ_Size + $Tpdo_Size + $Rpdo_Size]
+     set accumulator [expr $DynBuf0_Size + $DynBuf1_Size + $Errcntr_Size + $TxNmtQ_Size + $TxGenQ_Size + $TxSynQ_Size + $TxVetQ_Size + $RxVetQ_Size + $K2UQ_Size + $U2KQ_Size + $Pdo_Size]
      set total [expr $accumulator + 7 * $Qheader_Size + $statusControlSize ]
      return $total
 }
@@ -261,12 +244,12 @@ proc calc_total_memory { param_handle} {
 proc generate {drv_handle} {
      set mhsinst [xget_hw_parent_handle $drv_handle]
      xdefine_include_file $drv_handle "xparameters.h" "axi_hostinterface" "C_BASEADDR" "C_HIGHADDR" "axi_hostinterface" "C_HOST_BASEADDR" "C_HOST_HIGHADDR" "gBaseDynBuf0" "gBaseDynBuf1" "gBaseErrCntr" "gBaseTxNmtQ" "gBaseTxGenQ" "gBaseTxSynQ" "gBaseTxVetQ" "gBaseRxVetQ" "gBaseK2UQ" "gBaseU2KQ" \
-      "gBaseTpdo" "gBaseRpdo" "gBaseRes" "Conv_Size_KB_DynBuf0" "Conv_Size_KB_DynBuf1" "Conv_Size_B_ErrorCounter" "Conv_Size_KB_TxNmtQ" "Conv_Size_KB_TxGenQ" "Conv_Size_KB_TxSynQ" "Conv_Size_KB_TxVetQ" \
-      "Conv_Size_KB_RxVetQ" "Conv_Size_KB_K2UQ" "Conv_Size_KB_U2KQ" "Conv_Size_B_Tpdo" "Conv_Size_B_Rpdo"
+      "gBasePdo" "gBaseRes" "Conv_Size_KB_DynBuf0" "Conv_Size_KB_DynBuf1" "Conv_Size_B_ErrorCounter" "Conv_Size_KB_TxNmtQ" "Conv_Size_KB_TxGenQ" "Conv_Size_KB_TxSynQ" "Conv_Size_KB_TxVetQ" \
+      "Conv_Size_KB_RxVetQ" "Conv_Size_KB_K2UQ" "Conv_Size_KB_U2KQ" "Conv_Size_B_Pdo"
 
      my_xdefine_include_file $drv_handle "hostiflib-mem.h" "axi_hostinterface" "gBaseDynBuf0" "gBaseDynBuf1" "gBaseErrCntr" "gBaseTxNmtQ" "gBaseTxGenQ" "gBaseTxSynQ" "gBaseTxVetQ" "gBaseRxVetQ" "gBaseK2UQ" "gBaseU2KQ" \
-      "gBaseTpdo" "gBaseRpdo" "gBaseRes" "Conv_Size_KB_DynBuf0" "Conv_Size_KB_DynBuf1" "Conv_Size_B_ErrorCounter" "Conv_Size_KB_TxNmtQ" "Conv_Size_KB_TxGenQ" "Conv_Size_KB_TxSynQ" "Conv_Size_KB_TxVetQ" \
-      "Conv_Size_KB_RxVetQ" "Conv_Size_KB_K2UQ" "Conv_Size_KB_U2KQ" "Conv_Size_B_Tpdo" "Conv_Size_B_Rpdo"
+      "gBasePdo" "gBaseRes" "Conv_Size_KB_DynBuf0" "Conv_Size_KB_DynBuf1" "Conv_Size_B_ErrorCounter" "Conv_Size_KB_TxNmtQ" "Conv_Size_KB_TxGenQ" "Conv_Size_KB_TxSynQ" "Conv_Size_KB_TxVetQ" \
+      "Conv_Size_KB_RxVetQ" "Conv_Size_KB_K2UQ" "Conv_Size_KB_U2KQ" "Conv_Size_B_Pdo"
 
 }
 
@@ -343,10 +326,8 @@ proc my_xget_name {periph_handle param} {
      set name [format "%s%s" "HOSTIF_BASE_" "K2UQ"]
      } elseif {[string compare $param "gBaseU2KQ"] == 0} {
      set name [format "%s%s" "HOSTIF_BASE_" "U2KQ"]
-     } elseif {[string compare $param "gBaseTpdo"] == 0} {
-     set name [format "%s%s" "HOSTIF_BASE_" "TPDO"]
-     } elseif {[string compare $param "gBaseRpdo"] == 0} {
-     set name [format "%s%s" "HOSTIF_BASE_" "RPDO"]
+     } elseif {[string compare $param "gBasePdo"] == 0} {
+     set name [format "%s%s" "HOSTIF_BASE_" "Pdo"]
      } elseif {[string compare $param "gBaseRes"] == 0} {
      set name [format "%s%s" "HOSTIF_BASE_" "RES"]
      } elseif {[string compare $param "Conv_Size_KB_DynBuf0"] == 0} {
@@ -369,10 +350,8 @@ proc my_xget_name {periph_handle param} {
      set name [format "%s%s" "HOSTIF_SIZE_" "K2UQ"]
      } elseif {[string compare $param "Conv_Size_KB_U2KQ"] == 0} {
      set name [format "%s%s" "HOSTIF_SIZE_" "U2KQ"]
-     } elseif {[string compare $param "Conv_Size_B_Tpdo"] == 0} {
-     set name [format "%s%s" "HOSTIF_SIZE_" "TPDO"]
-     }  elseif {[string compare $param "Conv_Size_B_Rpdo"] == 0} {
-     set name [format "%s%s" "HOSTIF_SIZE_" "RPDO"]
+     } elseif {[string compare $param "Conv_Size_B_Pdo"] == 0} {
+     set name [format "%s%s" "HOSTIF_SIZE_" "Pdo"]
      } else {
      set name [format "%s%s" "HOSTIF_SIZE_" $param]
      }
