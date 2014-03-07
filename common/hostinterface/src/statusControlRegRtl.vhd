@@ -321,7 +321,6 @@ begin
     oBaseSetWrite   <= pcpBaseSetWrite or hostBaseSetWrite;
     oBaseSetRead    <= pcpBaseSetRead or hostBaseSetRead;
 
-    --TODO: Recheck sensitivity list
     --! register access
     regAcc : process (
         iHostWrite,
