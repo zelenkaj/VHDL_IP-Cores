@@ -1,0 +1,17 @@
+#!/bin/bash
+# Settings file for running simulation.
+
+SRC_LIST="\
+common/latch/src/dataLatch-e.vhd \
+altera/latch/src/dataLatch-syn-a.vhd \
+\
+common/parallelInterface/src/mpxSlave-rtl-ea.vhd \
+common/parallelInterface/src/mpxMaster-rtl-ea.vhd \
+common/parallelInterface/tb/tbMpxMaster-bhv-tb.vhd \
+"
+
+GEN_LIST=( \
+" gStim=common/parallelInterface/tb/tbMpxMaster_stim.txt " \
+)
+
+TOP_LEVEL=tbMpxMaster
