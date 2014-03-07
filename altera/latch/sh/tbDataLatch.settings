@@ -1,0 +1,12 @@
+#!/bin/bash
+# Settings file for running simulation.
+
+SRC_LIST="\
+common/latch/src/dataLatch-e.vhd \
+altera/latch/src/dataLatch-syn-a.vhd \
+common/latch/tb/tbDataLatch-bhv-tb.vhd \
+"
+
+GEN_LIST=
+
+TOP_LEVEL=tbDataLatch

@@ -77,9 +77,8 @@ architecture Bhv of tbHostInterface is
     constant cBaseRxVetQ        : natural := 16#06800#;
     constant cBaseK2UQ          : natural := 16#07000#;
     constant cBaseU2KQ          : natural := 16#09000#;
-    constant cBaseTpdo          : natural := 16#0B000#;
-    constant cBaseRpdo          : natural := 16#0E000#;
-    constant cBaseRes           : natural := 16#14000#;
+    constant cBasePdo           : natural := 16#0B000#;
+    constant cBaseRes           : natural := 16#0E000#;
 
     constant cRamSize       : natural := 640 * 1024; --[byte]
     constant cRamAddrWidth  : natural := LogDualis(cRamSize);
@@ -149,9 +148,8 @@ begin
             gBaseErrCntr        => cBaseErrCntr,
             gBaseK2UQ           => cBaseK2UQ,
             gBaseRes            => cBaseRes,
-            gBaseRpdo           => cBaseRpdo,
             gBaseRxVetQ         => cBaseRxVetQ,
-            gBaseTpdo           => cBaseTpdo,
+            gBasePdo            => cBasePdo,
             gBaseTxGenQ         => cBaseTxGenQ,
             gBaseTxNmtQ         => cBaseTxNmtQ,
             gBaseTxSynQ         => cBaseTxSynQ,

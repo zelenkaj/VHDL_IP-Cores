@@ -1,0 +1,27 @@
+#!/bin/bash
+# Settings file for running simulation.
+
+STIM_FILE="gStim=common/hostinterface/tb/tbDynamicBridgeBhv-stim.txt"
+
+SRC_LIST="\
+common/memory/src/dpRam-e.vhd \
+xilinx/memory/src/dpRam-rtl-a.vhd \
+common/hostinterface/src/hostInterfacePkg.vhd \
+common/hostinterface/src/dynamicBridgeRtl.vhd \
+common/hostinterface/src/irqGenRtl.vhd \
+common/hostinterface/src/statusControlRegRtl.vhd \
+common/hostinterface/src/hostInterfaceRtl.vhd \
+common/hostinterface/src/parallelInterfaceRtl.vhd \
+common/axiwrapper/src/axiLiteMasterWrapper-rtl-ea.vhd \
+common/axiwrapper/src/axiLiteSlaveWrapper-rtl-ea.vhd \
+xilinx/hostinterface/src/axi_hostinterface-rtl-ea.vhd \
+xilinx/hostinterface/tb/tbAxiHostinterface-bhv-ea.vhd \
+"
+
+GEN_LIST=(\
+"gPcpStim=xilinx/hostinterface/tb/tbPCPMasterBhv_TB_stim.txt \
+gHostStim=xilinx/hostinterface/tb/tbHostMasterBhv_TB_stim.txt \
+gHostIfModel=0"\
+)
+
+TOP_LEVEL=tbAxiHostInterface

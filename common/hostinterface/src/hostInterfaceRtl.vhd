@@ -88,11 +88,9 @@ entity hostInterface is
         gBaseK2UQ           : natural := 16#07000#;
         --! Base address User-to-Kernel Queue
         gBaseU2KQ           : natural := 16#09000#;
-        --! Base address Tpdo
-        gBaseTpdo           : natural := 16#0B000#;
-        --! Base address Rpdo
-        gBaseRpdo           : natural := 16#0E000#;
-        --! Base address Reserved (-1 = high address of Rpdo)
+        --! Base address Pdo
+        gBasePdo           : natural := 16#0B000#;
+        --! Base address Reserved (-1 = high address of Pdo)
         gBaseRes            : natural := 16#14000#
     );
     port (
@@ -175,8 +173,7 @@ architecture Rtl of hostInterface is
         std_logic_vector(to_unsigned(gBaseRxVetQ,   cArrayStd32ElementSize)),
         std_logic_vector(to_unsigned(gBaseK2UQ,     cArrayStd32ElementSize)),
         std_logic_vector(to_unsigned(gBaseU2KQ,     cArrayStd32ElementSize)),
-        std_logic_vector(to_unsigned(gBaseTpdo,     cArrayStd32ElementSize)),
-        std_logic_vector(to_unsigned(gBaseRpdo,     cArrayStd32ElementSize)),
+        std_logic_vector(to_unsigned(gBasePdo,      cArrayStd32ElementSize)),
         std_logic_vector(to_unsigned(gBaseRes,      cArrayStd32ElementSize))
     );
     --! Base address array count
@@ -293,9 +290,10 @@ begin
 
     -- host waitrequest from status/control, bridge or invalid
     oHostWaitrequest <= statCtrlWaitrequest when statCtrlSel = cActivated else
+                        not (iHostWrite or iHostRead) when invalidSel = cActivated else
                         cInactivated when bridgeEnable = cInactivated else
                         not bridgeTfDone when bridgeSel = cActivated else
-                        not invalidSel;
+                        cActivated;
 
     -- host readdata from status/control or bridge
     oHostReaddata <=    bridgeReaddata when bridgeSel = cActivated else

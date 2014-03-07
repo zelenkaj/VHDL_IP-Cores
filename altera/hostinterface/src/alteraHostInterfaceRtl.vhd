@@ -81,11 +81,9 @@ entity alteraHostInterface is
         --! Base address User-to-Kernel Queue
         gBaseU2KQ           : natural := 16#09000#;
         --! Base address Tpdo
-        gBaseTpdo           : natural := 16#0B000#;
-        --! Base address Rpdo
-        gBaseRpdo           : natural := 16#0E000#;
-        --! Base address Reserved (-1 = high address of Rpdo)
-        gBaseRes            : natural := 16#14000#;
+        gBasePdo           : natural := 16#0B000#;
+        --! Base address Reserved (-1 = high address of Pdo)
+        gBaseRes            : natural := 16#0E000#;
         --! Select Host Interface Type (0 = Avalon, 1 = Parallel)
         gHostIfType         : natural := 0;
         --! Data width of parallel interface (16/32)
@@ -275,8 +273,7 @@ begin
         gBaseRxVetQ            => gBaseRxVetQ,
         gBaseK2UQ              => gBaseK2UQ,
         gBaseU2KQ              => gBaseU2KQ,
-        gBaseTpdo              => gBaseTpdo,
-        gBaseRpdo              => gBaseRpdo,
+        gBasePdo               => gBasePdo,
         gBaseRes               => gBaseRes
     )
     port map (
